@@ -1,13 +1,13 @@
-#include "index_files/filefinder.hpp"
+#include "filecrawler/filefinder.hpp"
 
 #include <vector>
 #include <boost/filesystem.hpp>
 
-#include "index_files/logger.hpp"
+#include "filecrawler/logger.hpp"
 
 using namespace logging;
 
-namespace fileindex
+namespace filecrawler
 {
 
 FileFinder::FileFinder(ConcurrentQueue<string>& filesForProcessingQueue,
@@ -135,4 +135,4 @@ void FileFinder::processPath(const string& pathname)
     }
 }
 
-} // namespace fileindex
+} // namespace filecrawler

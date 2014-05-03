@@ -1,11 +1,13 @@
 #include "indexer.hpp"
 
-#include "index_files/filefinder.hpp"
+#include "filecrawler/filefinder.hpp"
 
 #include "fileindexer.hpp"
 
 namespace fileindex
 {
+
+using filecrawler::FileFinder;
 
 Indexer::Indexer(size_t threadsNumber): threadsNumber(threadsNumber)
 {

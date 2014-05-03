@@ -12,7 +12,7 @@
 using boost::regex;
 using std::string;
 
-namespace fileindex
+namespace filecrawler
 {
 
 class FileFinder
@@ -47,6 +47,6 @@ private:
     bool isRunning;
 };
 
-} // namespace fileindex
+} // namespace filecrawler
 
 #endif // FILEFINDER_HPP

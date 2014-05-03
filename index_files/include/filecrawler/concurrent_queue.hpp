@@ -12,7 +12,7 @@
 
 using namespace logging;
 
-namespace fileindex
+namespace filecrawler
 {
 
 template <typename T>
@@ -100,6 +100,6 @@ private:
     mutable std::mutex queueMutex;
 };
 
-} // namespace fileindex
+} // namespace filecrawler
 
 #endif // CONCURRENT_QUEUE_HPP

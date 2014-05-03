@@ -3,12 +3,15 @@
 
 #include <thread>
 
-#include "index_files/fileprocessor.hpp"
+#include "filecrawler/fileprocessor.hpp"
 
 #include "concurrent_frequency_table.hpp"
 
 namespace fileindex
 {
+
+using filecrawler::FileProcessor;
+using filecrawler::ConcurrentQueue;
 
 class FileIndexer : public FileProcessor
 {

@@ -6,7 +6,7 @@
 #include <boost/regex.hpp>
 #include <boost/program_options.hpp>
 
-#include "index_files/logger.hpp"
+#include "filecrawler/logger.hpp"
 
 #include "indexer.hpp"
 

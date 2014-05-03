@@ -1,15 +1,15 @@
-#include "index_files/fileprocessor.hpp"
+#include "filecrawler/fileprocessor.hpp"
 
 #include <fstream>
 #include <cctype>
 #include <array>
 #include <boost/optional.hpp>
 
-#include "index_files/logger.hpp"
+#include "filecrawler/logger.hpp"
 
 using namespace logging;
 
-namespace fileindex
+namespace filecrawler
 {
 
 FileProcessor::FileProcessor(ConcurrentQueue<std::string>& filesForProcessingQueue):
@@ -73,4 +73,4 @@ void FileProcessor::run()
     mergeThreadResources();
 }
 
-} // namespace fileindex
+} // namespace filecrawler

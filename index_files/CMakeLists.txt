@@ -15,6 +15,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wall -O0")
 
 set(CMAKE_CXX_FLAGS_RELEASE "--std=c++0x -Wall -O3")
 
-add_library(index_files ${SRC_LIST})
+add_library(filecrawler ${SRC_LIST})
 
 add_subdirectory(examples)

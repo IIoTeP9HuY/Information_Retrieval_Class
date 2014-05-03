@@ -5,7 +5,7 @@
 
 #include "concurrent_queue.hpp"
 
-namespace fileindex
+namespace filecrawler
 {
 
 class FileProcessor
@@ -35,6 +35,6 @@ protected:
     bool isRunning;
 };
 
-} // namespace fileindex
+} // namespace filecrawler
 
 #endif // FILEPROCESSOR_HPP
