@@ -1,9 +1,11 @@
-#include "fileindexer.hpp"
+#include "index_files/fileprocessor.hpp"
 
 #include <fstream>
 #include <cctype>
 #include <array>
 #include <boost/optional.hpp>
+
+#include "index_files/logger.hpp"
 
 using namespace logging;
 

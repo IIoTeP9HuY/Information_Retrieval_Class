@@ -6,8 +6,9 @@
 #include <boost/regex.hpp>
 #include <boost/program_options.hpp>
 
+#include "index_files/logger.hpp"
+
 #include "indexer.hpp"
-#include "logger.hpp"
 
 const size_t topNumber = 10;
 
@@ -109,7 +110,7 @@ int main(int argc, char* argv[])
 
     if (vm.count("help"))
     {
-        std::cout << "Usage: IndexFiles PATH" << std::endl;
+        std::cout << "Usage: " << argv[0] << " PATH" << std::endl;
         std::cout << generic << std::endl;
         return 1;
     }
@@ -121,8 +122,8 @@ int main(int argc, char* argv[])
 
     if (!vm.count("path"))
     {
-        std::cerr << "Usage: IndexFiles PATH" << std::endl;
-        std::cerr << "Try 'IndexFiles --help' for more information" << std::endl;
+        std::cout << "Usage: " << argv[0] << " PATH" << std::endl;
+        std::cerr << "Try '" << argv[0] << " --help' for more information" << std::endl;
         return 1;
     }
 

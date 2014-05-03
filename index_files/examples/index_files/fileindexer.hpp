@@ -3,7 +3,8 @@
 
 #include <thread>
 
-#include "fileprocessor.hpp"
+#include "index_files/fileprocessor.hpp"
+
 #include "concurrent_frequency_table.hpp"
 
 namespace fileindex

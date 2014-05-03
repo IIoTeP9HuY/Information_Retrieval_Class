@@ -1,6 +1,7 @@
 #include "indexer.hpp"
 
-#include "filefinder.hpp"
+#include "index_files/filefinder.hpp"
+
 #include "fileindexer.hpp"
 
 namespace fileindex

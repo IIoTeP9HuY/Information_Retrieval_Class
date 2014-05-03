@@ -1,9 +1,9 @@
-#include "filefinder.hpp"
+#include "index_files/filefinder.hpp"
 
 #include <vector>
 #include <boost/filesystem.hpp>
 
-#include "logger.hpp"
+#include "index_files/logger.hpp"
 
 using namespace logging;
 
