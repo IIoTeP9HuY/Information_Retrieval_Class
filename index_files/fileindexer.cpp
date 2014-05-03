@@ -12,9 +12,7 @@ namespace fileindex
 
 FileIndexer::FileIndexer(ConcurrentQueue<std::string>& filesForProcessingQueue,
                          ConcurrentFrequencyTable& wordsFrequencyTable):
-    filesForProcessingQueue(filesForProcessingQueue),
-    wordsFrequencyTable(wordsFrequencyTable), indexedFilesNumber(0),
-    isWaitingForInput(false), isRunning(false)
+    FileProcessor(filesForProcessingQueue), wordsFrequencyTable(wordsFrequencyTable)
 {
 }
 
@@ -22,58 +20,15 @@ FileIndexer::~FileIndexer()
 {
 }
 
-void FileIndexer::start()
+void FileIndexer::mergeThreadResources()
 {
-    Log::debug("Starting FileIndexer");
-
-    isRunning = true;
-    isWaitingForInput = true;
-    processingThread = std::thread(&FileIndexer::run, this);
-}
-
-void FileIndexer::wait()
-{
-    Log::debug("Waiting for FileIndexer");
-
-    if (isRunning)
-    {
-        isWaitingForInput = false;
-        processingThread.join();
-        isRunning = false;
-    }
-    Log::info("Indexed files number: ", indexedFilesNumber);
-}
-
-void FileIndexer::stop()
-{
-    Log::debug("Stopping FileIndexer");
-
-    isWaitingForInput = false;
-    isRunning = false;
-}
-
-void FileIndexer::run()
-{
-    while (isRunning && (isWaitingForInput || !filesForProcessingQueue.empty()))
-    {
-        boost::optional<std::string> path = filesForProcessingQueue.pull();
-        if (path)
-        {
-            index(path.get());
-        }
-        else
-        {
-            Log::debug("Queue is empty, nothing to get");
-        }
-    }
-
     for (auto it = localWordsFrequencyTable.begin(); it != localWordsFrequencyTable.end(); ++it)
     {
         wordsFrequencyTable.addWord(it->first, it->second);
     }
 }
 
-void FileIndexer::index(const std::string& path)
+bool FileIndexer::process(const std::string& path)
 {
     Log::debug("Indexing file ", path);
 
@@ -83,7 +38,7 @@ void FileIndexer::index(const std::string& path)
     if (!infile.is_open())
     {
         Log::warn("Failed to open file ", path);
-        return;
+        return false;
     }
 
     infile.seekg(0, std::ios::end);
@@ -112,7 +67,7 @@ void FileIndexer::index(const std::string& path)
             }
         }
     }
-    ++indexedFilesNumber;
+    return true;
 }
 
 } // namespace fileindex

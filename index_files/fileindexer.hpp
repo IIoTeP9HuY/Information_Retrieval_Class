@@ -3,13 +3,13 @@
 
 #include <thread>
 
-#include "concurrent_queue.hpp"
+#include "fileprocessor.hpp"
 #include "concurrent_frequency_table.hpp"
 
 namespace fileindex
 {
 
-class FileIndexer
+class FileIndexer : public FileProcessor
 {
 public:
     FileIndexer(ConcurrentQueue<std::string>& filesForProcessingQueue,
@@ -17,24 +17,13 @@ public:
 
     ~FileIndexer();
 
-    void start();
-
-    void wait();
-
-    void stop();
-
 private:
-    void run();
+    void mergeThreadResources();
 
-    void index(const std::string& path);
+    bool process(const std::string& path);
 
     std::unordered_map<std::string, int> localWordsFrequencyTable;
-    ConcurrentQueue<std::string>& filesForProcessingQueue;
     ConcurrentFrequencyTable& wordsFrequencyTable;
-    std::thread processingThread;
-    size_t indexedFilesNumber;
-    bool isWaitingForInput;
-    bool isRunning;
 };
 
 } // namespace fileindex
