@@ -17,8 +17,4 @@ set(CMAKE_CXX_FLAGS_RELEASE "--std=c++0x -Wall -O3")
 
 add_library(index_files ${SRC_LIST})
 
-add_executable(${PROJECT_NAME} main.cpp)
-
-find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
-
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} index_files)
+add_subdirectory(examples)
