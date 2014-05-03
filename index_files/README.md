@@ -3,9 +3,11 @@ and it's subdirectories, count frequences of all words in this files and
 prints top10 most frequent words.
 
 To run program you can use following commands:
-# cmake .
-# make
-# ./IndexFiles /usr/include/boost
+```bash
+cmake .
+make
+./IndexFiles /usr/include/boost
+```
 
 Program successfully runs on fresh Ubuntu Server 10.04
 Dependencies:
