@@ -17,4 +17,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "--std=c++0x -Wall -O3")
 
 add_library(filecrawler ${SRC_LIST})
 
+find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
+
+target_link_libraries(filecrawler ${Boost_LIBRARIES})
+
 add_subdirectory(examples)
