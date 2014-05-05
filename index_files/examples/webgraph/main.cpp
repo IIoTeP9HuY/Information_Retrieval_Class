@@ -75,6 +75,7 @@ std::vector<double> calculatePageranks(const Webgraph &webgraph) {
     const double DAMPING = 0.85;
     const size_t ITERATIONS = 30;
     for (size_t iteration = 0; iteration < ITERATIONS; ++iteration) {
+        logging::Log::debug("Pagerank iteration: ", iteration);
         int current = (iteration) % 2;
         int next = (iteration + 1) % 2;
         pageranks[next] = std::vector<double>(webgraph.verticesNumber(), (1 - DAMPING) / webgraph.verticesNumber());
@@ -89,26 +90,29 @@ std::vector<double> calculatePageranks(const Webgraph &webgraph) {
     return pageranks[ITERATIONS % 2];
 }
 
-void buildWebgraph(std::vector<std::string> paths, size_t threadsNumber)
+void buildWebgraph(const std::string &path, const std::string &domain, size_t threadsNumber)
 {
-    logging::Log::info("Building webgraph from ", to_string(paths), " with ", threadsNumber, " threads");
+    logging::Log::info("Building webgraph from '", path, "' for domain '", domain, "' using ", threadsNumber, " threads");
 
     WebgraphBuilder webgraphBuilder(threadsNumber);
-    Webgraph webgraph = webgraphBuilder.build(paths, boost::regex(".*\\.html"));
+    Webgraph webgraph = webgraphBuilder.build(path, domain, boost::regex(".*\\.html"));
 
     logging::Log::info("Webraph sites: ", webgraph.verticesNumber());
     logging::Log::info("Webraph links: ", webgraph.edgesNumber());
 
+    logging::Log::info("Calculating In-Out statistics");
     calculateInOutStatistics(webgraph);
     {
+        logging::Log::info("Calculating distance");
         std::ofstream ofs("distances");
-        auto distances = calculateDistances(webgraph.urlToIndex("company.yandex.ru.html"), webgraph);
+        auto distances = calculateDistances(webgraph.urlToIndex(addFileExtension(domain)), webgraph);
         for (size_t i = 0; i < webgraph.verticesNumber(); ++i) {
             ofs << webgraph.getUrl(i) << " " << distances[i] << '\n';
         }
         ofs.close();
     }
     {
+        logging::Log::info("Calculating pagerank");
         std::ofstream ofs("pagerank");
         auto pageranks = calculatePageranks(webgraph);
         for (size_t i = 0; i < webgraph.verticesNumber(); ++i) {
@@ -120,30 +124,25 @@ void buildWebgraph(std::vector<std::string> paths, size_t threadsNumber)
 
 int main(int argc, char *argv[]) {
     size_t threadsNumber;
-    std::vector<std::string> paths;
+    std::string path;
+    std::string domain;
     po::options_description generic("Generic options");
     generic.add_options()
         ("help", "produce help message")
         ("threads,t", po::value<size_t>(&threadsNumber)->default_value(3), "set threads number")
+        ("path", po::value<std::string>(&path), "set path with downloaded urls")
+        ("domain", po::value<std::string>(&domain), "set domain url")
         ("verbose,v", "set verbose")
     ;
 
-    po::positional_options_description p;
-    p.add("path", -1);
-
-    po::options_description hidden("Hidden options");
-    hidden.add_options()
-        ("path", po::value<std::vector<std::string>>(&paths), "input path")
-    ;
-
     po::options_description cmdline_options;
-    cmdline_options.add(generic).add(hidden);
+    cmdline_options.add(generic);
 
     po::variables_map vm;
 
     try
     {
-        po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
+        po::store(po::command_line_parser(argc, argv).options(cmdline_options).run(), vm);
     }
     catch (po::error& e)
     {
@@ -155,7 +154,7 @@ int main(int argc, char *argv[]) {
 
     if (vm.count("help"))
     {
-        std::cout << "Usage: " << argv[0] << " PATH" << std::endl;
+        std::cout << "Usage: " << argv[0] << " --path PATH --domain URL" << std::endl;
         std::cout << generic << std::endl;
         return 1;
     }
@@ -165,9 +164,9 @@ int main(int argc, char *argv[]) {
         std::cerr << "Wrong number of threads" << std::endl;
     }
 
-    if (!vm.count("path"))
+    if (!vm.count("path") || !vm.count("domain"))
     {
-        std::cout << "Usage: " << argv[0] << " PATH" << std::endl;
+        std::cout << "Usage: " << argv[0] << " --path PATH --domain URL" << std::endl;
         std::cerr << "Try '" << argv[0] << " --help' for more information" << std::endl;
         return 1;
     }
@@ -177,7 +176,7 @@ int main(int argc, char *argv[]) {
         logging::Log::info.setVerbose(true);
     }
 
-    buildWebgraph(paths, threadsNumber);
+    buildWebgraph(path, domain, threadsNumber);
 
 	return 0;
 }

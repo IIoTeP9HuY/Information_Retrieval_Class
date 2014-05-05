@@ -17,8 +17,9 @@ using filecrawler::ConcurrentQueue;
 class FileWebgraphBuilder : public FileProcessor {
 public:
     FileWebgraphBuilder(ConcurrentQueue<std::string>& filesForProcessingQueue,
-        Webgraph &webgraph, std::mutex &webgraphMutex):
-    	FileProcessor(filesForProcessingQueue), webgraph(webgraph), webgraphMutex(webgraphMutex) {
+        Webgraph &webgraph, std::mutex &webgraphMutex, const std::string &domain):
+    	FileProcessor(filesForProcessingQueue), webgraph(webgraph), 
+        webgraphMutex(webgraphMutex), domain(domain) {
     }
 
     ~FileWebgraphBuilder() {
@@ -57,7 +58,7 @@ private:
         infile.seekg(0, std::ios::beg);
         infile.read(&data[0], fileSizeInBytes);
 
-        URL domainURL = "company.yandex.ru";
+        URL domainURL = domain;
 
         auto pos = path.find(domainURL);
         URL fileUrl(path.begin() + pos, path.end());
@@ -74,6 +75,7 @@ private:
 
     Webgraph &webgraph;
     std::mutex &webgraphMutex;
+    const std::string &domain;
 
     std::vector< std::pair<std::string, std::string> > edges;
 };
