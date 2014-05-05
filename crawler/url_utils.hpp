@@ -57,6 +57,11 @@ bool noColon(URL url)
 	return url.find(":") == std::string::npos;
 }
 
+bool noQuestionMark(URL url)
+{
+	return url.find("?") == std::string::npos;
+}
+
 URL addFileExtension(URL url)
 {
 	boost::smatch matches;
@@ -74,6 +79,14 @@ bool startsWith(const std::string &s, const std::string start)
 		return false;
 	}
 	return !s.compare(0, start.length(), start);
+}
+
+bool isAllowed(URL startURL, URL url) {
+	return ((domain(url) == domain(startURL)) 
+			&& goodFileExtension(url) 
+			&& noHashtag(url) 
+			&& noSubsection(url)
+			&& noQuestionMark(url));
 }
 
 std::vector<URL> getUrls(URL rootURL, const std::string& content)
@@ -145,6 +158,23 @@ std::vector<URL> getUrls(URL rootURL, const std::string& content)
 	}
 
 	return urls;
+}
+
+std::string preprocessURL(URL url, bool verbose = false)
+{
+	boost::smatch matches;
+	if (boost::regex_search(url, matches, url_regex))
+	{
+		url = std::string(matches[2].first, matches[2].second);
+	}
+
+	while (url.front() == '/')
+		url.erase(url.begin());
+
+	while (url.back() == '/')
+		url.resize(url.length() - 1);
+
+	return url;
 }
 
 #endif // CRAWLER_URL_UTILS_HPP

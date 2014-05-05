@@ -48,22 +48,11 @@ void writeToFile(std::string fileName, const std::string& content)
 
 void writePageToFile(URL url, const std::string& content, std::string downloadDir, bool verbose = false)
 {
-	boost::smatch matches;
-	if (boost::regex_search(url, matches, url_regex))
-	{
-		url = std::string(matches[2].first, matches[2].second);
-	}
-	while (downloadDir.back() == '/')
+	url = preprocessURL(url);
+	while ((!downloadDir.empty()) && (downloadDir.back() == '/'))
 		downloadDir.resize(downloadDir.length() - 1);
 
-	while (url.front() == '/')
-		url.erase(url.begin());
-
-	while (url.back() == '/')
-		url.resize(url.length() - 1);
-
 	std::string filePath = downloadDir + "/" + addFileExtension(url);
-
 	std::string dirPath = downloadDir + "/" + url;
 	rTrimChar(dirPath, '/');
 	try
@@ -229,7 +218,7 @@ private:
 			std::cerr << "Url " << url << ", depth " << depth << std::endl;
 		}
 		std::string content;
-		if (!((domain(url) == domain(startURL)) && goodFileExtension(url) && noHashtag(url) && noSubsection(url)))
+		if (!isAllowed(startURL, url))
 		{
 			return;
 		}
@@ -247,7 +236,7 @@ private:
 				std::vector<URL> urls = getUrls(url, content);
 				for (const auto& url : urls)
 				{
-					if ((domain(url) == domain(startURL)) && goodFileExtension(url) && noHashtag(url) && noSubsection(url))
+					if (isAllowed(startURL, url))
 					{
 						addUrlToQueue(url, depth + 1);
 					}
