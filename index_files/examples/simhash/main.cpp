@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include <numeric>
 #include <fstream>
@@ -29,50 +30,107 @@ std::string to_string(std::vector<std::string> arg)
     return result;
 }
 
-std::vector<DocumentSimilarityInfo> buildSimhashes(const std::string &path, size_t threadsNumber)
+struct DocumentInfo {
+    DocumentInfo(size_t id, DocumentSimilarityInfo similarity): id(id), 
+        path(similarity.path), simhash(similarity.simhash), size(similarity.size) {}
+
+    size_t id;
+    std::string path;
+    Simhash simhash;
+    size_t size;
+};
+
+std::vector<DocumentInfo> buildSimhashes(const std::string &path, size_t threadsNumber)
 {
     logging::Log::info("Building simhashes from '", path, "' using ", threadsNumber, " threads");
 
     SimhashBuilder simhashBuilder(threadsNumber);
-    std::vector<DocumentSimilarityInfo> documentInfos = simhashBuilder.build(path, boost::regex(".*\\.html"));
-    logging::Log::info("Documents infos number: ", documentInfos.size());
+    std::vector<DocumentSimilarityInfo> documentSimilarities = simhashBuilder.build(path, boost::regex(".*\\.html"));
+    logging::Log::info("Documents infos number: ", documentSimilarities.size());
+
+    std::vector<DocumentInfo> documentInfos;
+    for (size_t i = 0; i < documentSimilarities.size(); ++i) {
+        documentInfos.push_back(DocumentInfo(i, std::move(documentSimilarities[i])));
+    }
 
     return documentInfos;
 }
 
 size_t simhashDistance(const Simhash &lhs, const Simhash &rhs) {
-    if (lhs.length() != rhs.length()) {
-        throw std::invalid_argument("Different lengths of passed simhashes");
-    }
-
-    size_t distance = 0;
-    for (size_t i = 0; i < lhs.length(); ++i) {
-        distance += lhs[i] != rhs[i];
-    }
-    return distance;
+    return __builtin_popcount(lhs ^ rhs);
 }
 
-std::vector<std::vector<size_t>> findSimilar(std::vector<DocumentSimilarityInfo> documentInfos, size_t simhashBitsDistance) {
-    std::vector<std::vector<size_t>> similarDocuments(documentInfos.size());
-    for (size_t i = 0; i < documentInfos.size(); ++i) {
-        for (size_t j = i + 1; j < documentInfos.size(); ++j) {
-            size_t s1 = documentInfos[i].size;
-            size_t s2 = documentInfos[j].size;
-            double proportion = abs(s1 - s2) * 1.0 / (s1 + s2);
-            if (proportion > (0.25) / (0.25 + 2)) {
-                continue;
-            }
-            size_t distance = simhashDistance(documentInfos[i].simhash, documentInfos[j].simhash);
-            if (distance < simhashBitsDistance) {
-                similarDocuments[i].push_back(j);
-                similarDocuments[j].push_back(i);
+uint64_t bitRotateRight(uint64_t x, size_t shift) {
+    return (x << shift) | (x >> (64 - shift));
+}
+
+bool bitRotateComparator(const DocumentInfo &lhs, const DocumentInfo &rhs, const size_t &shift) {
+    return (bitRotateRight(lhs.simhash, shift) < bitRotateRight(rhs.simhash, shift));
+}
+
+namespace std {
+template <> struct hash<std::pair<size_t, size_t>> {
+    inline size_t operator()(const std::pair<size_t, size_t> &v) const {
+        std::hash<size_t> hasher;
+        return hasher(v.first) ^ hasher(v.second);
+    }
+};
+}
+
+using namespace std::placeholders;
+
+std::vector<std::unordered_set<size_t>> findSimilar(std::vector<DocumentInfo> &documentInfos, size_t simhashBitsDistance) {
+    std::vector<std::unordered_set<size_t>> similarDocuments(documentInfos.size());
+    std::vector<size_t> distancesHistogram(64, 0);
+    std::unordered_set<std::pair<size_t, size_t>> compared;
+
+    const size_t WINDOW_SIZE = 20;
+    const size_t ROTATE_SIZE = 8;
+
+    for (size_t k = 0; k < 64 / ROTATE_SIZE; ++k) {
+        std::sort(documentInfos.begin(), documentInfos.end(), 
+                std::bind(bitRotateComparator, _1, _2, k * ROTATE_SIZE));
+
+        Log::info("Rotate number: ", k);
+
+        for (size_t i = 0; i < documentInfos.size(); ++i) {
+            for (size_t j = i + 1; j < std::min(i + WINDOW_SIZE, documentInfos.size()); ++j) {
+                size_t s1 = documentInfos[i].size;
+                size_t s2 = documentInfos[j].size;
+                size_t idI = documentInfos[i].id;
+                size_t idJ = documentInfos[j].id;
+                double proportion = 0.25;
+                if (std::max(s1, s2) > std::min(s1, s2) * (1 + proportion)) {
+                    continue;
+                }
+                size_t distance = simhashDistance(documentInfos[i].simhash, documentInfos[j].simhash);
+                if (compared.find(std::make_pair(idI, idJ)) == compared.end()) {
+                    compared.insert(std::make_pair(idI, idJ));
+                    compared.insert(std::make_pair(idJ, idI));
+                    ++distancesHistogram[distance];
+                }
+                if (distance <= simhashBitsDistance) {
+                    if (similarDocuments[idI].find(idJ) == similarDocuments[idI].end()) {
+                        similarDocuments[idI].insert(idJ);
+                        similarDocuments[idJ].insert(idI);
+                    }
+                }
             }
         }
     }
+
+    {
+        std::ofstream ofs("distances_histogram");
+        for (size_t i = 0; i < distancesHistogram.size(); ++i) {
+            ofs << i << " " << distancesHistogram[i] << '\n';
+        }
+        ofs.close();
+    }
+
     return similarDocuments;
 }
 
-std::vector<std::vector<size_t>> findClusters(const std::vector<std::vector<size_t>> &similarDocuments) {
+std::vector<std::vector<size_t>> findClusters(const std::vector<std::unordered_set<size_t>> &similarDocuments) {
     std::vector<std::vector<size_t>> clusters;
     std::set<std::pair<size_t, size_t>, std::greater<std::pair<int, int>>> verticesPowers;
     std::vector<char> clustered(similarDocuments.size(), false);
@@ -94,15 +152,13 @@ std::vector<std::vector<size_t>> findClusters(const std::vector<std::vector<size
         clustered[document] = true;
         clusters.push_back(std::vector<size_t>());
         clusters.back().push_back(document);
-        for (size_t i = 0; i < similarDocuments[document].size(); ++i) {
-            size_t similarDocument = similarDocuments[document][i];
+        for (size_t similarDocument : similarDocuments[document]) {
             if (clustered[similarDocument]) {
                 continue;
             }
             clustered[similarDocument] = true;
 
-            for (size_t j = 0; j < similarDocuments[similarDocument].size(); ++j) {
-                size_t similarToSimilarDocument = similarDocuments[similarDocument][j];
+            for (size_t similarToSimilarDocument : similarDocuments[similarDocument]) {
                 if (clustered[similarToSimilarDocument]) {
                     continue;
                 }
@@ -168,7 +224,7 @@ int main(int argc, char *argv[]) {
         logging::Log::info.setVerbose(true);
     }
 
-    std::vector<DocumentSimilarityInfo> documentInfos;
+    std::vector<DocumentInfo> documentInfos;
     if (vm.count("build")) {
 	    if (!vm.count("path"))
 	    {
@@ -186,17 +242,27 @@ int main(int argc, char *argv[]) {
         ofs.close();
 	} else {
         std::ifstream ifs("simhashes");
+        size_t id = 0;
         while (!ifs.eof()) {
-        	std::string path, simhash;
+        	std::string path;
+            Simhash simhash;
             size_t size;
         	ifs >> path >> size >> simhash;
         	if (ifs.eof()) {
         		break;
         	}
-        	documentInfos.push_back(DocumentSimilarityInfo(path, simhash, size));
+        	documentInfos.push_back(
+                DocumentInfo(id, DocumentSimilarityInfo(path, simhash, size))
+            );
+            ++id;
         }
         ifs.close();
 	}
+
+    std::unordered_map<size_t, std::string> idToPath;
+    for (const auto &documentInfo : documentInfos) {
+        idToPath[documentInfo.id] = documentInfo.path;
+    }
 
 	if (vm.count("find"))
     {
@@ -215,7 +281,7 @@ int main(int argc, char *argv[]) {
                 ofs << "Cluster number: " << i << '\n';
                 for (size_t j = 0; j < clusters[i].size(); ++j) {
                     size_t document = clusters[i][j];
-                    ofs << documentInfos[document].path << '\n';
+                    ofs << idToPath[document] << '\n';
                 }
             }
             ofs.close();

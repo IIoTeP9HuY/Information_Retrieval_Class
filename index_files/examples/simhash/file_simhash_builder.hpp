@@ -14,7 +14,7 @@ namespace simhash {
 using filecrawler::FileProcessor;
 using filecrawler::ConcurrentQueue;
 
-typedef std::string Simhash;
+typedef uint64_t Simhash;
 
 struct DocumentSimilarityInfo {
     DocumentSimilarityInfo(const std::string &path, const Simhash &simhash, size_t size): 
@@ -28,7 +28,7 @@ struct DocumentSimilarityInfo {
 
 class SimhashCalculator {
 public:
-	std::string calculate(const std::string &text) {
+	Simhash calculate(const std::string &text) {
 		hashtable.assign(64, 0);
 
 		std::vector<std::string> line;
@@ -45,9 +45,10 @@ public:
 				line.clear();
 			}
 		}
-		Simhash simhash;
+		Simhash simhash = 0;
 		for (size_t bit = 0; bit < 64; ++bit) {
-			simhash += (hashtable[bit] >= 0) ? '1' : '0';
+            simhash <<= 1;
+            simhash |= hashtable[bit] >= 0;
 		}
 		return simhash;
 	}
