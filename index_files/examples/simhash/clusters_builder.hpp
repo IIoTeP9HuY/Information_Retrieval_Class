@@ -91,7 +91,8 @@ public:
 	}
 
 	void fillClusters() {
-		for (const auto &sameSimhashesBlock : sameSimhashes) {
+		for (int i = static_cast<int>(sameSimhashes.size()) - 1; i >= 0; --i) {
+			const auto &sameSimhashesBlock = sameSimhashes[i];
 			size_t id = sameSimhashesBlock.first;
 			size_t clusterIndex = clusterOfDocument[id];
 			for (auto duplicateId : sameSimhashesBlock.second) {
