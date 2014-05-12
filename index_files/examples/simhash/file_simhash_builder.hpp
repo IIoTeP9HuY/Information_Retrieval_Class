@@ -26,6 +26,17 @@ struct DocumentSimilarityInfo {
     size_t size;
 };
 
+struct DocumentInfo {
+    DocumentInfo(size_t id, DocumentSimilarityInfo similarity): id(id), 
+        path(similarity.path), simhash(similarity.simhash), size(similarity.size) {}
+
+    size_t id;
+    // Flatten structure for simplification
+    std::string path;
+    Simhash simhash;
+    size_t size;
+};
+
 class SimhashCalculator {
 public:
 	Simhash calculate(const std::string &text) {
