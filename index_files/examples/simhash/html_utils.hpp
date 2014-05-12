@@ -86,7 +86,7 @@ bool should_strip(char c) {
 
 void rstrip(std::string &s) {
 	while (!s.empty() && should_strip(s.back())) {
-		s.pop_back();
+		s.resize(s.size() - 1);
 	}
 }
 
