@@ -42,6 +42,11 @@ bool bitDropComparator(const DocumentInfo &lhs, const DocumentInfo &rhs, const s
     return (bitDrop(lhs.simhash, bit) < bitDrop(rhs.simhash, bit));
 }
 
+bool preprocessedSimhashComparator(const DocumentInfo &lhs, const DocumentInfo &rhs, 
+									std::function<uint64_t(uint64_t)> preprocessor) {
+    return preprocessor(lhs.simhash) < preprocessor(rhs.simhash);
+}
+
 using namespace std::placeholders;
 
 class ClustersBuilder {
@@ -53,33 +58,39 @@ public:
 
 		logging::Log::info("Clustering ", documentInfos.size(), " documents");
 
-		for (int bit = 64; bit >= 0; --bit) {
-	        std::sort(documentInfos.begin(), documentInfos.end(), std::bind(bitDropComparator, _1, _2, bit));
-	        std::vector<DocumentInfo> uniqueDocumentInfos;
-	        size_t blockStart = 0;
-	        Simhash blockSimhash = documentInfos[blockStart].simhash;
-	        std::vector<size_t> currentBlock;
-	        for (size_t i = 1; i <= documentInfos.size(); ++i) {
-	        	if ((i == documentInfos.size()) || (bitDrop(blockSimhash, bit) != bitDrop(documentInfos[i].simhash, bit))) {
-	        		uniqueDocumentInfos.push_back(documentInfos[blockStart]);
-	        		if (!currentBlock.empty()) {
-	        			sameSimhashes.push_back(
-	        				std::make_pair(documentInfos[blockStart].id, currentBlock)
-	        			);
-	        		}
-	        		currentBlock.clear();
+		for (int firstBit = 64; firstBit >= 0; --firstBit) {
+			for (int secondBit = firstBit; secondBit >= 0; --secondBit) {
+				auto preprocessor = [&](uint64_t x) {
+					return bitDrop(bitDrop(x, firstBit), secondBit);
+				};
+		        std::sort(documentInfos.begin(), documentInfos.end(), 
+		        		std::bind(preprocessedSimhashComparator, _1, _2, preprocessor));
+		        std::vector<DocumentInfo> uniqueDocumentInfos;
+		        size_t blockStart = 0;
+		        Simhash blockSimhash = documentInfos[blockStart].simhash;
+		        std::vector<size_t> currentBlock;
+		        for (size_t i = 1; i <= documentInfos.size(); ++i) {
+		        	if ((i == documentInfos.size()) || (preprocessor(blockSimhash) != preprocessor(documentInfos[i].simhash))) {
+		        		uniqueDocumentInfos.push_back(documentInfos[blockStart]);
+		        		if (!currentBlock.empty()) {
+		        			sameSimhashes.push_back(
+		        				std::make_pair(documentInfos[blockStart].id, currentBlock)
+		        			);
+		        		}
+		        		currentBlock.clear();
 
-	        		if (i != documentInfos.size()) {
-	        			blockStart = i;
-	        			blockSimhash = documentInfos[blockStart].simhash;
-	        		}
-	        	} else {
-	        		currentBlock.push_back(documentInfos[i].id);
-	        	}
-	        }
-			logging::Log::info("Unique: ", uniqueDocumentInfos.size(), ", current bit: ", bit);
-	        documentInfos = std::move(uniqueDocumentInfos);
-	    }
+		        		if (i != documentInfos.size()) {
+		        			blockStart = i;
+		        			blockSimhash = documentInfos[blockStart].simhash;
+		        		}
+		        	} else {
+		        		currentBlock.push_back(documentInfos[i].id);
+		        	}
+		        }
+		        documentInfos = std::move(uniqueDocumentInfos);
+			}
+			logging::Log::info("Unique: ", documentInfos.size(), ", current bit ", firstBit);
+		}
 
 	    for (size_t i = 0; i < documentInfos.size(); ++i) {
 	    	clusterOfDocument[documentInfos[i].id] = i;
