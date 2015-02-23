@@ -9,8 +9,9 @@ make
 ```
 
 Program successfully runs on OSX 10.10
+
 Dependencies:
-GCC >= 4.8
-CMake >= 2.6
+* (gcc >= 4.8) or (clang >= 3.4)
+* CMake >= 2.6
 
 Author: Kashin Andrey, email: kashin.andrej@gmail.com
