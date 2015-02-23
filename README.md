@@ -1,10 +1,12 @@
-Information Retrieval SHAD course programming assignments repository
+# Information Retrieval Course [![Build Status](https://travis-ci.org/IIoTeP9HuY/Information_Retrieval_Class.png?branch=master)](https://travis-ci.org/IIoTeP9HuY/Information_Retrieval_Class)
+
+Information Retrieval YSDA course programming assignments repository
 http://shad.yandex.ru/
 
 Introduction
 ============
 
-There are my solutions for Programming Exercises from SHAD Information Retrieval classes. Made in Python/C++.
+These are my solutions for programming exercises from YSDA Information Retrieval classes. Written in Python/C++.
 
 Collaboration Policy
 ==========
