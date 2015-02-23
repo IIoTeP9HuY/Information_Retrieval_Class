@@ -4,10 +4,12 @@
 
 #include "search_engine.hpp"
 
-void printTop(const std::vector<irindexer::SearchEngine::DocumentScore> &phraseDocuments, size_t topNumber) {
+using namespace irindexer;
 
+void printTop(const std::vector<SearchEngine::DocumentScore> &phraseDocuments, size_t topNumber) {
     for (size_t i = 0; i < std::min(topNumber, phraseDocuments.size()); ++i) {
-        std::cout << "id: " << std::setw(5) << phraseDocuments[i].documentIndex << "   score: " << phraseDocuments[i].score << std::endl;
+        std::cout << "id: " << std::setw(5) << phraseDocuments[i].documentIndex
+                  << "  score: " << phraseDocuments[i].score << std::endl;
     }
     std::cout << std::endl;
 }
@@ -21,7 +23,7 @@ int main(int argc, char **argv) {
     std::string dictPath(argv[1]);
     std::string indexPath(argv[2]);
 
-    irindexer::SearchEngine searchEngine(dictPath, indexPath);
+    SearchEngine searchEngine(dictPath, indexPath);
 
     while (!feof(stdin)) {
         std::cout << "Search query: ";
@@ -33,8 +35,8 @@ int main(int argc, char **argv) {
             break;
         }
 
-        printTop(searchEngine.ScoredPhraseSearch<irindexer::TFIDFDocumentScoreEvaluator>(searchPhrase), 10);
-        printTop(searchEngine.ScoredPhraseSearch<irindexer::BM25DocumentScoreEvaluator>(searchPhrase), 10);
+        printTop(searchEngine.ScoredPhraseSearch<TFIDFDocumentScoreEvaluator>(searchPhrase), 10);
+        printTop(searchEngine.ScoredPhraseSearch<BM25DocumentScoreEvaluator>(searchPhrase), 10);
 
         std::cout << "--------------------------------" << std::endl;
     }

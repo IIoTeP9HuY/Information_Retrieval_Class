@@ -17,9 +17,24 @@ using std::string;
 using std::vector;
 using std::cin;
 
+struct WordRecord {
+    WordRecord()
+    { }
+
+    WordRecord(const string& word, int index, int frequency)
+        : word(word)
+        , index(index)
+        , frequency(frequency)
+    { }
+
+    string word;
+    int index;
+    int frequency;
+};
+
 class Dictionary {
 public:
-    void readFromFile(string filename)
+    void readFromFile(const string& filename)
     {
         std::ifstream input(filename);
 
@@ -42,31 +57,18 @@ public:
         std::cerr << "Finished reading " << std::to_string(wordsNumber) << " words" << std::endl;
     }
 
-    struct WordRecord {
-        WordRecord() {}
-
-        WordRecord(string word, int index, int frequency): 
-            word(word), index(index), frequency(frequency)
-        {
-        }
-
-        string word;
-        int index;
-        int frequency;
-    };
-
     size_t size() const {
         return intToRecord.size();
     }
 
-    void addWord(string word, int index, int frequency)
+    void addWord(const string& word, int index, int frequency)
     {
         WordRecord record(word, index, frequency);
         intToRecord[index] = record;
         wordToRecord[word] = record;
     }
 
-    bool containsWord(string word) {
+    bool containsWord(const string& word) const {
         return (wordToRecord.find(word) != wordToRecord.end());
     }
 
@@ -74,7 +76,7 @@ public:
         return intToRecord.at(index);
     }
 
-    WordRecord getWordRecord(string word) const {
+    WordRecord getWordRecord(const string& word) const {
         return wordToRecord.at(word);
     }
 
@@ -85,9 +87,10 @@ private:
 
 class Index {
 public:
-    Index(): averageDocumentLength(0.0) {}
+    Index()
+    { }
 
-    void readFromFile(string filename) {
+    void readFromFile(const string& filename) {
         std::ifstream input(filename);
 
         if (!input.is_open()) {
@@ -114,7 +117,7 @@ public:
             averageDocumentLength /= documentsNumber();
         }
 
-        std::cerr << "Finished reading, " << documents.size() << " documents" << std::endl;
+        std::cerr << "Finished reading " << documents.size() << " documents" << std::endl;
     }
 
     size_t documentsNumber() const {
@@ -127,7 +130,7 @@ public:
 
     vector<int> getWordDocuments(int wordIndex) const {
         vector<int> documents;
-        for (const auto &doc : wordDocumentFrequency.at(wordIndex)) {
+        for (const auto& doc : wordDocumentFrequency.at(wordIndex)) {
             documents.push_back(doc.first);
         }
         return documents;
@@ -155,13 +158,13 @@ private:
         maxWordDocumentFrequency[documentIndex] = std::max(maxWordDocumentFrequency[documentIndex], frequency);
     }
 
-    double averageDocumentLength;
+    double averageDocumentLength = 0.0;
     std::unordered_set<int> documents;
-    std::unordered_map< int, std::unordered_map<int, int> > wordDocumentFrequency;
+    std::unordered_map<int, std::unordered_map<int, int>> wordDocumentFrequency;
     std::unordered_map<int, int> maxWordDocumentFrequency;
 };
 
-vector<string> tokenize(const string &text, const string &delimiters) {
+vector<string> tokenize(const string& text, const string& delimiters) {
     std::unordered_set<char> delimiters_set(delimiters.begin(), delimiters.end());
     vector<string> tokens;
     string currentToken = "";
@@ -183,9 +186,13 @@ const string delimeters = " ,\n\t";
 
 class SearchEngine {
 public:
-    SearchEngine() {}
+    SearchEngine()
+    { }
 
-    SearchEngine(const Dictionary &dict, const Index &index): dict(dict), index(index) {}
+    SearchEngine(const Dictionary& dict, const Index& index)
+        : dict(dict)
+        , index(index)
+    { }
 
     SearchEngine(const string& dictPath, const string& indexPath) {
         dict.readFromFile(dictPath);
@@ -193,25 +200,29 @@ public:
     }
 
     struct DocumentScore {
-        DocumentScore(double score, int documentIndex): score(score), documentIndex(documentIndex) {}
+        DocumentScore(double score, int documentIndex)
+            : score(score)
+            , documentIndex(documentIndex)
+        { }
 
-        DocumentScore(): DocumentScore(0, 0) {}
+        DocumentScore()
+        { }
 
         bool operator < (const DocumentScore &ds) const {
             return score > ds.score;
         }
 
-        double score;
-        int documentIndex;
+        double score = 0.0;
+        int documentIndex = 0;
     };
 
     template<typename DocumentScoreEvaluator>
-    vector<DocumentScore> ScoredPhraseSearch(string phrase) {
+    vector<DocumentScore> ScoredPhraseSearch(const string& phrase) const {
         DocumentScoreEvaluator evaluator(dict, index);
 
         std::cerr << "Using " << evaluator.getName() << std::endl;
 
-        vector<Dictionary::WordRecord> tokensRecords = transformPhrase(phrase);
+        vector<WordRecord> tokensRecords = transformPhrase(phrase);
         vector<int> documents = findDocumentsIntersection(tokensRecords);
 
         std::cerr << "Found " << documents.size() << " documents" << std::endl;
@@ -227,8 +238,8 @@ public:
 
 private:
 
-    vector<Dictionary::WordRecord> transformPhrase(string phrase) {
-        vector<Dictionary::WordRecord> tokensRecords;
+    vector<WordRecord> transformPhrase(const string& phrase) const {
+        vector<WordRecord> tokensRecords;
         vector<string> tokens = tokenize(phrase, delimeters);
 
         if (tokens.empty()) {
@@ -237,14 +248,14 @@ private:
 
         for (size_t i = 0; i < tokens.size(); ++i) {
             if (!dict.containsWord(tokens[i])) {
-                return vector<Dictionary::WordRecord>();
+                return vector<WordRecord>();
             }
             tokensRecords.push_back(dict.getWordRecord(tokens[i]));
         }
         return tokensRecords;
     }
 
-    vector<int> findDocumentsIntersection(const vector<Dictionary::WordRecord>& records) {
+    vector<int> findDocumentsIntersection(const vector<WordRecord>& records) const {
         vector<int> searchResults;
 
         if (records.empty()) {
@@ -256,7 +267,7 @@ private:
             std::unordered_set<int> wordDocumentsSet(wordDocuments.begin(), wordDocuments.end());
 
             vector<int> filteredSearchResults;
-            for (const auto &result : searchResults) {
+            for (const auto& result : searchResults) {
                 if (wordDocumentsSet.find(result) != wordDocumentsSet.end()) {
                     filteredSearchResults.push_back(result);
                 }
@@ -272,15 +283,13 @@ private:
 
 class DocumentScoreEvaluator {
 public:
-    DocumentScoreEvaluator(const Dictionary &dict, const Index &index): dict(dict), index(index) {}
+    DocumentScoreEvaluator(const Dictionary& dict, const Index& index)
+        : dict(dict)
+        , index(index)
+    { }
 
-    virtual double evaluateScore(int documentIndex, const vector<Dictionary::WordRecord>& keywords) const {
-        return 1.0;
-    }
-
-    virtual string getName() const {
-        return "ScoreEvaluator";
-    }
+    virtual double evaluateScore(int documentIndex, const vector<WordRecord>& keywords) const = 0;
+    virtual string getName() const = 0;
 
 protected:
     Dictionary dict;
@@ -289,56 +298,57 @@ protected:
 
 class BooleanDocumentScoreEvaluator : public DocumentScoreEvaluator {
 public:
-    BooleanDocumentScoreEvaluator(const Dictionary &dict, const Index &index): DocumentScoreEvaluator(dict, index) {}
+    BooleanDocumentScoreEvaluator(const Dictionary& dict, const Index& index)
+        : DocumentScoreEvaluator(dict, index)
+    { }
 
-    double evaluateScore(int documentIndex, const vector<Dictionary::WordRecord>& keywords) const {
-        return 1;
+    double evaluateScore(int documentIndex, const vector<WordRecord>& keywords) const override {
+        return 1.0;
     }
 
-    string getName() const {
+    string getName() const override {
         return "Boolean ScoreEvaluator";
     }
 };
 
 class TFIDFDocumentScoreEvaluator : public DocumentScoreEvaluator {
 public:
-    TFIDFDocumentScoreEvaluator(const Dictionary &dict, const Index &index): DocumentScoreEvaluator(dict, index) {}
+    TFIDFDocumentScoreEvaluator(const Dictionary& dict, const Index& index)
+        : DocumentScoreEvaluator(dict, index)
+    { }
 
-    double evaluateScore(int documentIndex, const vector<Dictionary::WordRecord>& keywords) const {
-        double score = 0;
+    double evaluateScore(int documentIndex, const vector<WordRecord>& keywords) const override {
+        double score = 0.0;
         for (size_t i = 0; i < keywords.size(); ++i) {
             size_t wordDocumentsNumber = index.getWordDocumentsNumber(keywords[i].index);
             size_t wordDocumentFrequency = index.getWordDocumentFrequency(keywords[i].index, documentIndex);
-            double idf = log((index.documentsNumber() - wordDocumentsNumber + 0.5) 
-                    / (wordDocumentsNumber + 0.5));
-
+            double idf = log((index.documentsNumber() - wordDocumentsNumber + 0.5) / (wordDocumentsNumber + 0.5));
             double tf = 0.5 + 0.5 * wordDocumentFrequency / index.getMaxWordDocumentFrequency(documentIndex);
-
             score += idf * tf;
         }
         return score;
     }
 
-    string getName() const {
+    string getName() const override {
         return "TFIDF ScoreEvaluator";
     }
 };
 
 class BM25DocumentScoreEvaluator : public DocumentScoreEvaluator {
 public:
-    BM25DocumentScoreEvaluator(const Dictionary &dict, const Index &index): DocumentScoreEvaluator(dict, index) {}
+    BM25DocumentScoreEvaluator(const Dictionary& dict, const Index& index)
+        : DocumentScoreEvaluator(dict, index)
+    { }
 
-    double evaluateScore(int documentIndex, const vector<Dictionary::WordRecord>& keywords) const {
-        double b = 0.75;
-        double k = 1.5;
-        double score = 0;
+    double evaluateScore(int documentIndex, const vector<WordRecord>& keywords) const override {
+        double score = 0.0;
         for (size_t i = 0; i < keywords.size(); ++i) {
             size_t wordDocumentsNumber = index.getWordDocumentsNumber(keywords[i].index);
 
-            double wordDocumentFrequency = index.getWordDocumentFrequency(keywords[i].index, documentIndex) * 1.0 
+            double wordDocumentFrequency = index.getWordDocumentFrequency(keywords[i].index, documentIndex) * 1.0
                 / index.getMaxWordDocumentFrequency(documentIndex);
 
-            double idf = log((index.documentsNumber() - wordDocumentsNumber + 0.5) 
+            double idf = log((index.documentsNumber() - wordDocumentsNumber + 0.5)
                     / (wordDocumentsNumber + 0.5));
 
             score += idf * (wordDocumentFrequency * (k + 1)) 
@@ -347,9 +357,13 @@ public:
         return score;
     }
 
-    string getName() const {
+    string getName() const override {
         return "BM25 ScoreEvaluator";
     }
+
+private:
+    static constexpr double b = 0.75;
+    static constexpr double k = 1.5;
 };
 
 } // namespace irindexer
