@@ -8,7 +8,7 @@ make
 ./irindexer dictionary.txt index.txt
 ```
 
-Program successfully runs on OSX 10.10
+Program successfully runs on OSX 10.10 and Ubuntu 12.04 LTS
 
 Dependencies:
 * (gcc >= 4.8) or (clang >= 3.4)
