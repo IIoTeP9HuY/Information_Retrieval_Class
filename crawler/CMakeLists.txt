@@ -12,6 +12,7 @@ add_executable(${PROJECT_NAME}
 
 add_definitions(-O2)
 add_definitions(-std=c++0x)
+add_definitions(-std=gnu++11)
 
 find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
