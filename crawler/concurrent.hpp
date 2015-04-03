@@ -5,6 +5,8 @@
 #include <mutex>
 #include <unordered_set>
 
+namespace NCrawler {
+
 template<typename T>
 class ConcurrentQueue
 {
@@ -88,5 +90,7 @@ private:
 	mutable std::mutex mutex;
 	std::unordered_set<T> set;
 };
+
+} // namespace NCrawler
 
 #endif // CRAWLER_CONCURRENT_HPP

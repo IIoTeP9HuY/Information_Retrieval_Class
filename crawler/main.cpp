@@ -7,13 +7,15 @@
 
 #include "crawler.hpp"
 
+using namespace NCrawler;
+
 namespace po = boost::program_options;
 
 std::shared_ptr<Crawler> crawler;
 
 void interruptHandler(int param)
 {
-	std::cerr << "Interrupted" << std::endl;
+	std::cerr << "Interrupted. Saving progress..." << std::endl;
 	crawler->stop();
 }
 

@@ -3,6 +3,8 @@
 
 #include <chrono>
 
+namespace NCrawler {
+
 class Timer
 {
 public:
@@ -25,5 +27,7 @@ private:
 	std::string title;
 	std::chrono::time_point<std::chrono::high_resolution_clock> start;
 };
+
+} // namespace NCrawler
 
 #endif // CRAWLER_TIMER_HPP
