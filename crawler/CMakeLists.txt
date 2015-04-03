@@ -13,7 +13,7 @@ add_executable(${PROJECT_NAME}
 add_definitions(-O2)
 add_definitions(-std=c++0x)
 
-#find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
+find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
 set(LIBRARIES
 	boost_filesystem
@@ -26,5 +26,5 @@ set(LIBRARIES
 
 target_link_libraries(${PROJECT_NAME}
 	${LIBRARIES}
-	#${Boost_LIBRARIES}
+	${Boost_LIBRARIES}
 )

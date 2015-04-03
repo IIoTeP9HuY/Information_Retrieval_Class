@@ -9,6 +9,7 @@ before_install:
 
 install:
   - sudo apt-get install -qq cmake
+  - sudo apt-get install -qq libboost-program-options-dev libboost-filesystem-dev libboost-regex-dev libboost-system-dev curl
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
 
 before_script:
