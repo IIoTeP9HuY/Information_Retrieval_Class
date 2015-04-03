@@ -184,15 +184,13 @@ private:
 			else if (!isFinished) {
 				isFinished = true;
 				finishedThreads += 1;
-			}
-			else {
+			} else {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 		if (debugOutput) {
-			std::cerr << "Thread: " << std::this_thread::get_id() <<
-									   " finished" << std::endl;
+			std::cerr << "Thread: " << std::this_thread::get_id() << " finished" << std::endl;
 		}
 	}
 
