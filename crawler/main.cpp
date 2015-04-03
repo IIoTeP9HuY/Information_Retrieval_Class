@@ -28,13 +28,13 @@ int main(int argc, const char* argv[]) {
 
     po::options_description generic("Generic options");
     generic.add_options()
-        ("help", "produce help message")
-        ("threads,t", po::value<size_t>(&threadsNumber)->default_value(3), "set threads number")
-        ("depth,d", po::value<size_t>(&maxDepth)->default_value(std::numeric_limits<size_t>::max()), "set max crawl depth")
-        ("pages,p", po::value<size_t>(&maxPages)->default_value(std::numeric_limits<size_t>::max()), "set max crawl pages number")
+        ("help", "produce this help message")
+        ("threads,t", po::value<size_t>(&threadsNumber)->default_value(3), "set number of threads")
+        ("depth,d", po::value<size_t>(&maxDepth)->default_value(std::numeric_limits<size_t>::max()), "set max depth of crawling")
+        ("pages,p", po::value<size_t>(&maxPages)->default_value(std::numeric_limits<size_t>::max()), "set max number of downloaded pages")
         ("dest,o", po::value<std::string>(&downloadDir)->default_value("./site"), "set download directory")
-        ("verbose,v", "set verbose")
-        ("continue,c", "set continue")
+        ("verbose,v", "turn on verbose output")
+        ("continue,c", "resume download")
     ;
 
     po::positional_options_description p;
