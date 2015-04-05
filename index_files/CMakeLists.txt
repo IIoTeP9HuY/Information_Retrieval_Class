@@ -3,6 +3,9 @@ project(IndexFiles)
 cmake_minimum_required(VERSION 2.6)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
+if(CMAKE_VERSION VERSION_LESS 2.8)
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/2.8)
+endif()
 
 aux_source_directory("src/" SRC_LIST)
 file(GLOB HEADERS "include/*.hpp")

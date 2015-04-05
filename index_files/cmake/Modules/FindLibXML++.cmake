@@ -8,6 +8,7 @@
 #
 
 include(LibFindMacros)
+include(FindPackageHandleStandardArgs)
 
 # Use pkg-config to get hints about paths
 libfind_pkg_check_modules(LibXML++_PKGCONF QUIET libxml++-2.6)
