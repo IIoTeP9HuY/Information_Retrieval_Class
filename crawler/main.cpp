@@ -94,29 +94,13 @@ int main(int argc, const char* argv[]) {
 
     if (vm.count("continue"))
     {
-    	{
-    		std::ifstream ifs("new_urls.txt");
-    		while (!ifs.eof())
-    		{
-    			std::string url;
-    			ifs >> url;
-    			crawler->addNewUrl(url);
-    		}
-    	}
-    	{
-    		std::ifstream ifs("ready_urls.txt");
-    		while (!ifs.eof())
-    		{
-    			std::string url;
-    			ifs >> url;
-    			crawler->addOldUrl(url);
-    		}
-    	}
+        crawler->restore();
     }
 
     prev_handler = signal(SIGINT, interruptHandler);
 
 	crawler->start();
+	crawler->stop();
 
 	return 0;
 }

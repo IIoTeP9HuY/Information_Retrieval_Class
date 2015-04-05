@@ -161,6 +161,28 @@ public:
 		}
 	}
 
+	void restore()
+	{
+    	{
+    		std::ifstream ifs("new_urls.txt");
+    		while (!ifs.eof())
+    		{
+    			std::string url;
+    			ifs >> url;
+    			addNewUrl(url);
+    		}
+    	}
+    	{
+    		std::ifstream ifs("ready_urls.txt");
+    		while (!ifs.eof())
+    		{
+    			std::string url;
+    			ifs >> url;
+    			addOldUrl(url);
+    		}
+    	}
+	}
+
 private:
 
 	void threadFunction()
