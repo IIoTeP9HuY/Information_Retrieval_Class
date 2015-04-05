@@ -18,7 +18,7 @@ add_executable(Simhash ${SIMHASH_SRC_LIST})
 find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
 find_package(LibXML++ REQUIRED)
-include_directories(${LIBXMLPP_INCLUDE_DIR} /usr/lib/libxml++-2.6/include)
+include_directories(${LibXML++_INCLUDE_DIRS} /usr/lib/libxml++-2.6/include)
 
 find_package(GLIBMM2 REQUIRED)
 include_directories(${GLIBMM2_INCLUDE_DIR})

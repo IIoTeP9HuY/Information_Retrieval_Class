@@ -1,33 +1,58 @@
-#locate libxml++ library
+# find libxml++
+#
+# exports:
+#
+#   LibXML++_FOUND
+#   LibXML++_INCLUDE_DIRS
+#   LibXML++_LIBRARIES
+#
 
-# This module defines
-#  LIBXMLPP_LIBRARY
-#  LIBXMLPP_FOUND
-#  LIBXMLPP_INCLUDE_DIR
-#  LIBXMLPP_CFLAGS
-#  LIBXMLPP_LINKFLAGS
+include(LibFindMacros)
 
+# Use pkg-config to get hints about paths
+libfind_pkg_check_modules(LibXML++_PKGCONF QUIET libxml++-2.6)
 
-IF(LIBXMLPP_LIBRARY AND LIBXMLPP_INCLUDE_DIR)
-	SET(LIBXMLPP_FOUND TRUE)
-ELSE(LIBXMLPP_LIBRARY AND LIBXMLPP_INCLUDE_DIR)
-	INCLUDE(UsePkgConfig)
-	PKGCONFIG("libxml++-2.6" _LibXmlppIncDir _LibXmlppLibDir _LibXmlppLinkFlags _LibXmlppCflags)
+# Include dir
+find_path(LibXML++_INCLUDE_DIR
+  NAMES libxml++/libxml++.h
+  PATHS
+    ${LibXML++_PKGCONF_INCLUDE_DIRS}
+    ${LibXML++_ROOT_DIR}
+    /usr
+  PATH_SUFFIXES
+    include/libxml++-2.6
+)
 
-	# set additional flags needed to compile/link against libxml++
-	SET(LIBXMLPP_CFLAGS ${_LibXmlppCFlags} CACHE STRING "CFLAGS required for libxml++")
-	SET(LIBXMLPP_LINKFLAGS ${_LibXmlppLinkFlags} CACHE STRING "Flags used for linking against libxml++")
+# Config Include dir
+find_path(LibXML++Config_INCLUDE_DIR
+  NAMES libxml++config.h
+  PATHS
+    ${LibXML++_PKGCONF_INCLUDE_DIRS}
+    ${LibXML++_ROOT_DIR}
+    /usr
+  PATH_SUFFIXES
+    lib/libxml++-2.6/include
+)
 
-	# search for include and library path
-	FIND_PATH(LIBXMLPP_INCLUDE_DIR libxml++/libxml++.h PATHS ${_LibXmlppIncDir} ${_LibXmlppIncDir}/libxml++-2.6)
-	FIND_LIBRARY(LIBXMLPP_LIBRARY xml++-2.6 PATHS ${_LibXmlppLibDir})
+# Finally the library itself
+find_library(LibXML++_LIBRARY
+  NAMES xml++ xml++-2.6
+  PATHS
+    ${LibXML++_PKGCONF_LIBRARY_DIRS}
+    ${LibXML++_ROOT_DIR}
+    /usr
+  PATH_SUFFIXES
+    lib
+)
 
-	IF(LIBXMLPP_INCLUDE_DIR AND LIBXMLPP_LIBRARY)
-		SET(LIBXMLPP_FOUND TRUE)
-		MESSAGE(STATUS "Found LibXml++: ${LIBXMLPP_LIBRARY}")
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibXML++ DEFAULT_MSG LibXML++_LIBRARY LibXML++_INCLUDE_DIR)
 
-	ELSE(LIBXMLPP_INCLUDE_DIR AND LIBXMLPP_LIBRARY)
-		SET(LIBXMLPP_FOUND FALSE)
-		MESSAGE(SEND_ERROR "Could NOT find LibXml++")
-	ENDIF(LIBXMLPP_INCLUDE_DIR AND LIBXMLPP_LIBRARY)
-ENDIF(LIBXMLPP_LIBRARY AND LIBXMLPP_INCLUDE_DIR)
+if(LibXML++_INCLUDE_DIR AND LibXML++_LIBRARY)
+  set(LibXML++_LIBRARIES ${LibXML++_LIBRARY} ${LibXML++_PKGCONF_LIBRARIES})
+  set(LibXML++_INCLUDE_DIRS ${LibXML++_INCLUDE_DIR} ${LibXML++Config_INCLUDE_DIR} ${LibXML++_PKGCONF_INCLUDE_DIRS})
+  set(LibXML++_FOUND yes)
+else()
+  set(LibXML++_LIBRARIES)
+  set(LibXML++_INCLUDE_DIRS)
+  set(LibXML++_FOUND no)
+endif()
