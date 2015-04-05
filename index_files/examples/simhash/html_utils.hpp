@@ -45,7 +45,7 @@ std::string html_xml(std::string html) {
 		tidyResponseCode = tidySaveBuffer(tidyDoc, &tidyOutputBuffer);
  
 	if (tidyResponseCode < 0) {
-		throw ("Tidy encountered an error while parsing an HTML response. Tidy response code: " + tidyResponseCode);
+		throw ("Tidy encountered an error while parsing an HTML response. Tidy response code: " + std::to_string(tidyResponseCode));
 	}
  
 	std::string tidyResult = (char*) tidyOutputBuffer.bp;

@@ -117,7 +117,7 @@ private:
 	std::unordered_map<size_t, size_t> clusterOfDocument;
 	std::vector<std::vector<size_t>> clusters;
 
-	std::vector<std::unordered_set<size_t>> findSimilar(std::vector<DocumentInfo> &documentInfos, size_t simhashBitsDistance) {
+	std::vector<std::unordered_set<size_t>> findSimilar(std::vector<DocumentInfo> &documentInfos) {
 	    std::vector<std::unordered_set<size_t>> similarDocuments(documentInfos.size());
 	    std::vector<size_t> distancesHistogram(64, 0);
 	    std::unordered_set<std::pair<size_t, size_t>> compared;
