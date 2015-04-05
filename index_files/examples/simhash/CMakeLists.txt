@@ -24,7 +24,7 @@ find_package(GLIBMM2 REQUIRED)
 include_directories(${GLIBMM2_INCLUDE_DIR})
 
 FIND_PACKAGE(GLIB REQUIRED)
-include_directories(${GLIB_INCLUDES})
+include_directories(${GLIB_INCLUDE_DIRS})
 
 include_directories(/usr/local/lib/include/)
 

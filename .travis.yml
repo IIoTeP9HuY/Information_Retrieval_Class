@@ -12,6 +12,7 @@ install:
   - sudo apt-get install -qq cmake
   - sudo apt-get install -qq g++-4.8
   - sudo apt-get install libboost-program-options1.55-dev libboost-filesystem1.55-dev libboost-regex1.55-dev libboost-system1.55-dev curl
+  - sudo apt-get install -qq glib2.0 libglibmm-2.4-dev libxml++2.6-dev libtidy-dev
 
 before_script:
   - mkdir build && cd build

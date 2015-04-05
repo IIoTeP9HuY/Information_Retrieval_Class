@@ -14,6 +14,8 @@ namespace webgraph {
 using filecrawler::FileProcessor;
 using filecrawler::ConcurrentQueue;
 
+using NCrawler::URL;
+
 class FileWebgraphBuilder : public FileProcessor {
 public:
     FileWebgraphBuilder(ConcurrentQueue<std::string>& filesForProcessingQueue,
@@ -62,10 +64,10 @@ private:
 
         auto pos = path.find(domainURL);
         URL fileUrl(path.begin() + pos, path.end());
-        auto urls = getUrls(domainURL, data);
+        auto urls = NCrawler::getUrls(domainURL, data);
         for (auto &url : urls) {
-            if (isAllowed(domainURL, url)) {
-                url = addFileExtension(url);
+            if (NCrawler::isAllowed(domainURL, url)) {
+                url = NCrawler::addFileExtension(url);
                 edges.push_back(std::make_pair(fileUrl, url));
             }
         }

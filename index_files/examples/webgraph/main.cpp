@@ -105,7 +105,7 @@ void buildWebgraph(const std::string &path, const std::string &domain, size_t th
     {
         logging::Log::info("Calculating distance");
         std::ofstream ofs("distances");
-        auto distances = calculateDistances(webgraph.urlToIndex(addFileExtension(domain)), webgraph);
+        auto distances = calculateDistances(webgraph.urlToIndex(NCrawler::addFileExtension(domain)), webgraph);
         for (size_t i = 0; i < webgraph.verticesNumber(); ++i) {
             ofs << webgraph.getUrl(i) << " " << distances[i] << '\n';
         }
