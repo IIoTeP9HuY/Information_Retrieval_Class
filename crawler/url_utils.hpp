@@ -23,7 +23,7 @@ boost::regex bad_extension_regex(".(xml|php|js|jpg|png)",
 								 boost::regex::normal | boost::regbase::icase);
 
 boost::regex subsection_regex(
-		"(Special|User_talk|User|Wikipedia_talk|User|Template|MediaWiki|Talk|Wikipedia|Help|File):",
+		"(Special|User_talk|User|Wikipedia_talk|User|Template|MediaWiki|Talk|Wikipedia|Help|File|Category):",
 		boost::regex::normal | boost::regbase::icase);
 
 static inline std::string &rTrimChar(std::string &s, char c)
@@ -66,6 +66,11 @@ bool noQuestionMark(URL url)
 	return url.find("?") == std::string::npos;
 }
 
+bool noFTP(URL url)
+{
+	return url.find("ftp:") == std::string::npos;
+}
+
 URL addFileExtension(URL url)
 {
 	boost::smatch matches;
@@ -89,7 +94,8 @@ bool isAllowed(URL startURL, URL url)
 			&& goodFileExtension(url)
 			&& noHashtag(url)
 			&& noSubsection(url)
-			&& noQuestionMark(url));
+			&& noQuestionMark(url)
+			&& noFTP(url));
 }
 
 std::vector<URL> getUrls(URL rootURL, const std::string &content)
