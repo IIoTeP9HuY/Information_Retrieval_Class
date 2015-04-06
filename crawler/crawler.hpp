@@ -138,7 +138,6 @@ public:
 				urls.push_back(url);
 				notReadyUrls.insert(url);
 			}
-
 			std::ofstream os("new_urls.txt");
 			for (int i = 0; i < urls.size(); ++i) {
 				os << urls[i] << std::endl;

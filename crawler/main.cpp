@@ -17,6 +17,7 @@ void interruptHandler(int param)
 {
 	std::cerr << "Interrupted. Saving progress..." << std::endl;
 	crawler->stop();
+	exit(0);
 }
 
 int main(int argc, const char* argv[]) {
