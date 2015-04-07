@@ -8,6 +8,16 @@ Introduction
 
 These are my solutions for programming exercises from YSDA Information Retrieval classes. Written in Python/C++.
 
+Requirements
+============
+* gcc >= 4.8 or clang >= 3.4
+* cmake
+* boost >= 1.55
+* glib2
+* libglibmm-2.4
+* libxml++2.6
+* libtidy
+
 Usage tutorial
 ============
 
