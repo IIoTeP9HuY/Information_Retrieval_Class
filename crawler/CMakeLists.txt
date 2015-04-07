@@ -10,6 +10,10 @@ add_executable(${PROJECT_NAME}
 	${SRC_LIST}
 )
 
+add_executable(flatten
+	flatten.cpp
+)
+
 add_definitions(-O2)
 add_definitions(-std=c++0x)
 add_definitions(-std=gnu++11)
@@ -25,7 +29,13 @@ set(LIBRARIES
 	pthread
 )
 
+
 target_link_libraries(${PROJECT_NAME}
+	${LIBRARIES}
+	${Boost_LIBRARIES}
+)
+
+target_link_libraries(flatten
 	${LIBRARIES}
 	${Boost_LIBRARIES}
 )

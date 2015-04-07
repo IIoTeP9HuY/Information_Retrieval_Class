@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
         ("build,b", "set build mode")
         ("find,f", "set find mode")
         ("bits,s", po::value<size_t>(&simhashBitsDistance)->default_value(5), "set simhash bits distance")
-    ;
+        ;
 
     po::options_description cmdline_options;
     cmdline_options.add(generic);
@@ -99,45 +99,45 @@ int main(int argc, char *argv[]) {
 
     std::vector<DocumentInfo> documentInfos;
     if (vm.count("build")) {
-	    if (!vm.count("path"))
-	    {
-	        std::cout << "Usage: " << argv[0] << " --build --path PATH" << std::endl;
-	        std::cerr << "Try '" << argv[0] << " --help' for more information" << std::endl;
-	        return 1;
-	    }
+        if (!vm.count("path"))
+        {
+            std::cout << "Usage: " << argv[0] << " --build --path PATH" << std::endl;
+            std::cerr << "Try '" << argv[0] << " --help' for more information" << std::endl;
+            return 1;
+        }
 
-	    documentInfos = buildSimhashes(path, threadsNumber);
+        documentInfos = buildSimhashes(path, threadsNumber);
 
         std::ofstream ofs("simhashes");
-    	for (const auto &documentInfo : documentInfos) {
-    		ofs << documentInfo.path << " " << documentInfo.size << " " << documentInfo.simhash << '\n';
+        for (const auto &documentInfo : documentInfos) {
+            ofs << documentInfo.path << " " << documentInfo.size << " " << documentInfo.simhash << '\n';
         }
         ofs.close();
-	} else {
+    } else {
         std::ifstream ifs("simhashes");
         size_t id = 0;
         while (!ifs.eof()) {
-        	std::string path;
+            std::string path;
             Simhash simhash;
             size_t size;
-        	ifs >> path >> size >> simhash;
-        	if (ifs.eof()) {
-        		break;
-        	}
-        	documentInfos.push_back(
-                DocumentInfo(id, DocumentSimilarityInfo(path, simhash, size))
-            );
+            ifs >> path >> size >> simhash;
+            if (ifs.eof()) {
+                break;
+            }
+            documentInfos.push_back(
+                    DocumentInfo(id, DocumentSimilarityInfo(path, simhash, size))
+                    );
             ++id;
         }
         ifs.close();
-	}
+    }
 
     std::unordered_map<size_t, std::string> idToPath;
     for (const auto &documentInfo : documentInfos) {
         idToPath[documentInfo.id] = documentInfo.path;
     }
 
-	if (vm.count("find"))
+    if (vm.count("find"))
     {
         ClustersBuilder clustersBuilder(simhashBitsDistance);
         auto clusters = clustersBuilder.build(documentInfos);
@@ -163,5 +163,5 @@ int main(int argc, char *argv[]) {
             ofs.close();
         }
     }
-	return 0;
+    return 0;
 }

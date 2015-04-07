@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 include_directories("../../include")
 
-aux_source_directory(. SIMHASH_SRC_LIST)
+set(SIMHASH_SRC_LIST "main.cpp")
 file(GLOB SIMHASH_HEADERS "*.hpp")
 list(APPEND SIMHASH_SRC_LIST ";" ${SIMHASH_HEADERS})
 
@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -Wall -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "--std=c++0x -Wall -O3")
 
 add_executable(Simhash ${SIMHASH_SRC_LIST})
+add_executable(extract "extract.cpp")
 
 find_package(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
@@ -28,7 +29,9 @@ include_directories(${GLIB_INCLUDE_DIRS})
 
 include_directories(/usr/local/lib/include/)
 
-find_library(TIDY_LIBRARY tidy 
+find_library(TIDY_LIBRARY tidy
 	PATHS /usr/local/lib)
 
 target_link_libraries(Simhash ${Boost_LIBRARIES} filecrawler ${LibXML++_LIBRARIES} ${GLIBMM2_LIBRARY} ${TIDY_LIBRARY})
+
+target_link_libraries(extract ${Boost_LIBRARIES} filecrawler ${LibXML++_LIBRARIES} ${GLIBMM2_LIBRARY} ${TIDY_LIBRARY})

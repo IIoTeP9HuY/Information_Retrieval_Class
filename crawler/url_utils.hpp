@@ -170,6 +170,17 @@ std::string preprocessURL(URL url, bool verbose = false)
 	return url;
 }
 
+std::pair<std::string, std::string> urlToPath(URL url, std::string downloadDir) {
+	url = preprocessURL(url);
+	while ((!downloadDir.empty()) && (downloadDir.back() == '/'))
+		downloadDir.resize(downloadDir.length() - 1);
+
+	std::string filePath = downloadDir + "/" + addFileExtension(url);
+	std::string dirPath = downloadDir + "/" + url;
+	rTrimChar(dirPath, '/');
+    return std::make_pair(filePath, dirPath);
+}
+
 } // namespace NCrawler
 
 #endif // CRAWLER_URL_UTILS_HPP

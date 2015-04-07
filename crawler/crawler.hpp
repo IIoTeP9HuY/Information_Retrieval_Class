@@ -53,13 +53,9 @@ void writeToFile(std::string fileName, const std::string &content)
 
 void writePageToFile(URL url, const std::string &content, std::string downloadDir, bool verbose = false)
 {
-	url = preprocessURL(url);
-	while ((!downloadDir.empty()) && (downloadDir.back() == '/'))
-		downloadDir.resize(downloadDir.length() - 1);
-
-	std::string filePath = downloadDir + "/" + addFileExtension(url);
-	std::string dirPath = downloadDir + "/" + url;
-	rTrimChar(dirPath, '/');
+	std::string filePath;
+	std::string dirPath;
+    std::tie(filePath, dirPath) = urlToPath(url, downloadDir);
 	try {
 		boost::filesystem::create_directories(dirPath);
 	}
