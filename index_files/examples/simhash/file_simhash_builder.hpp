@@ -39,50 +39,50 @@ struct DocumentInfo {
 
 class SimhashCalculator {
 public:
-	Simhash calculate(const std::string &text) {
-		hashtable.assign(64, 0);
+    Simhash calculate(const std::string &text) {
+        hashtable.assign(64, 0);
 
-		std::vector<std::string> line;
-		std::string word;
-		for (size_t i = 0; i < text.size(); ++i) {
-			if (isspace(text[i])) {
-				line.push_back(word);
-				word = "";
-			} else {
-				word += text[i];
-			}
-			if (text[i] == '\n') {
-				calculatePhraseSimhash(line);
-				line.clear();
-			}
-		}
-		Simhash simhash = 0;
-		for (size_t bit = 0; bit < 64; ++bit) {
+        std::vector<std::string> line;
+        std::string word;
+        for (size_t i = 0; i < text.size(); ++i) {
+            if (isspace(text[i])) {
+                line.push_back(word);
+                word = "";
+            } else {
+                word += text[i];
+            }
+            if (text[i] == '\n') {
+                calculatePhraseSimhash(line);
+                line.clear();
+            }
+        }
+        Simhash simhash = 0;
+        for (size_t bit = 0; bit < 64; ++bit) {
             simhash <<= 1;
             simhash |= hashtable[bit] >= 0;
-		}
-		return simhash;
-	}
+        }
+        return simhash;
+    }
 private:
-	void calculatePhraseSimhash(std::vector<std::string> line) {
-		for (size_t i = 0; i + 1 < line.size(); ++i) {
-			std::string hashed = line[i] + " " + line[i + 1];
-			size_t hash = std::hash<std::string>()(hashed);
-			for (size_t bit = 0; bit < 64; ++bit) {
-				hashtable[bit] += (hash & (1ll << bit)) ? 1 : -1;
-			}
-		}
-	}
+    void calculatePhraseSimhash(std::vector<std::string> line) {
+        for (size_t i = 0; i + 1 < line.size(); ++i) {
+            std::string hashed = line[i] + " " + line[i + 1];
+            size_t hash = std::hash<std::string>()(hashed);
+            for (size_t bit = 0; bit < 64; ++bit) {
+                hashtable[bit] += (hash & (1ll << bit)) ? 1 : -1;
+            }
+        }
+    }
 
-	std::vector<int> hashtable;
+    std::vector<int> hashtable;
 };
 
 class FileSimhashBuilder : public FileProcessor {
 public:
     FileSimhashBuilder(ConcurrentQueue<std::string>& filesForProcessingQueue,
         std::vector<DocumentSimilarityInfo> &documentInfos, std::mutex &documentInfosMutex):
-    	FileProcessor(filesForProcessingQueue), documentInfos(documentInfos), 
-    	documentInfosMutex(documentInfosMutex) {
+        FileProcessor(filesForProcessingQueue), documentInfos(documentInfos), 
+        documentInfosMutex(documentInfosMutex) {
     }
 
     ~FileSimhashBuilder() {
@@ -92,7 +92,7 @@ private:
     void mergeThreadResources() {
         std::lock_guard<std::mutex> guard(documentInfosMutex);
         for (const auto &documentInfo : threadDocumentsInfos) {
-        	documentInfos.push_back(documentInfo);
+            documentInfos.push_back(documentInfo);
         }
         threadDocumentsInfos.clear();
     }
@@ -120,9 +120,9 @@ private:
 
         std::string parsed_data;
         try {
-        	parsed_data = get_inner_text(data);
+            parsed_data = get_inner_text(data);
         } catch (std::exception &e) {
-        	Log::error("Failed to parse ", path, " Error: ", e.what());
+            Log::error("Failed to parse ", path, " Error: ", e.what());
         }
 
         // {
@@ -130,7 +130,7 @@ private:
         //     ofs << parsed_data << '\n';
         //     ofs.close();
         // }
-        
+
         // Process data here
         SimhashCalculator simhashCalculator;
 

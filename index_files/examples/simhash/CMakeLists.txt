@@ -30,7 +30,7 @@ include_directories(${GLIB_INCLUDE_DIRS})
 include_directories(/usr/local/lib/include/)
 
 find_library(TIDY_LIBRARY tidy
-	PATHS /usr/local/lib)
+    PATHS /usr/local/lib)
 
 target_link_libraries(Simhash ${Boost_LIBRARIES} filecrawler ${LibXML++_LIBRARIES} ${GLIBMM2_LIBRARY} ${TIDY_LIBRARY})
 

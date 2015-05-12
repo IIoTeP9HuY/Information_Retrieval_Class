@@ -14,36 +14,36 @@ using filecrawler::FileFinder;
 
 class SimhashBuilder {
 public:
-	SimhashBuilder(size_t threadsNumber): threadsNumber(threadsNumber) {}
+    SimhashBuilder(size_t threadsNumber): threadsNumber(threadsNumber) {}
 
     std::vector<DocumentSimilarityInfo> build(const std::string& path, boost::regex fileFilterRegex) {
-	    std::vector<DocumentSimilarityInfo> documentInfos;
-	    std::mutex documentInfosMutex;
-	    ConcurrentQueue<std::string> filesForProcessingQueue;
-	    FileFinder fileFinder(filesForProcessingQueue, fileFilterRegex);
+        std::vector<DocumentSimilarityInfo> documentInfos;
+        std::mutex documentInfosMutex;
+        ConcurrentQueue<std::string> filesForProcessingQueue;
+        FileFinder fileFinder(filesForProcessingQueue, fileFilterRegex);
         fileFinder.addPathForProcessing(path);
-	    fileFinder.start();
+        fileFinder.start();
 
-	    std::vector<std::shared_ptr<FileSimhashBuilder>> fileSimhashBuilders;
-	    for (size_t i = 0; i < threadsNumber; ++i)
-	    {
-	        fileSimhashBuilders.emplace_back(
-	        	new FileSimhashBuilder(filesForProcessingQueue, documentInfos, documentInfosMutex)
-	        );
-	    }
+        std::vector<std::shared_ptr<FileSimhashBuilder>> fileSimhashBuilders;
+        for (size_t i = 0; i < threadsNumber; ++i)
+        {
+            fileSimhashBuilders.emplace_back(
+                new FileSimhashBuilder(filesForProcessingQueue, documentInfos, documentInfosMutex)
+            );
+        }
 
-	    for (size_t i = 0; i < threadsNumber; ++i)
-	    {
-	        fileSimhashBuilders[i]->start();
-	    }
+        for (size_t i = 0; i < threadsNumber; ++i)
+        {
+            fileSimhashBuilders[i]->start();
+        }
 
-	    fileFinder.wait();
-	    for (size_t i = 0; i < threadsNumber; ++i)
-	    {
-	        fileSimhashBuilders[i]->wait();
-	    }
+        fileFinder.wait();
+        for (size_t i = 0; i < threadsNumber; ++i)
+        {
+            fileSimhashBuilders[i]->wait();
+        }
 
-	    return std::move(documentInfos);
+        return std::move(documentInfos);
     }
 
 private:
