@@ -105,7 +105,7 @@ int main(int argc, const char* argv[]) {
 
     std::ifstream urlsMappingStream(urlsMapping);
     if (!urlsMappingStream.is_open()) {
-        std::cout << "Failed to real to urls mapping list" << std::endl;
+        std::cout << "Failed to read url mappings list" << std::endl;
         return 0;
     }
 
