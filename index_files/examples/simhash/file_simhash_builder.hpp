@@ -17,7 +17,7 @@ using filecrawler::ConcurrentQueue;
 typedef uint64_t Simhash;
 
 struct DocumentSimilarityInfo {
-    DocumentSimilarityInfo(const std::string &path, const Simhash &simhash, size_t size): 
+    DocumentSimilarityInfo(const std::string &path, const Simhash &simhash, size_t size):
         path(path), simhash(simhash), size(size) {
     }
 
@@ -27,7 +27,7 @@ struct DocumentSimilarityInfo {
 };
 
 struct DocumentInfo {
-    DocumentInfo(size_t id, DocumentSimilarityInfo similarity): id(id), 
+    DocumentInfo(size_t id, DocumentSimilarityInfo similarity): id(id),
         path(similarity.path), simhash(similarity.simhash), size(similarity.size) {}
 
     size_t id;
@@ -37,25 +37,28 @@ struct DocumentInfo {
     size_t size;
 };
 
+std::vector<std::string> tokenize(const std::string& text) {
+    std::vector<std::string> tokens;
+    std::string word;
+    for (size_t i = 0; i < text.size(); ++i) {
+        if (isspace(text[i])) {
+            tokens.push_back(word);
+            word = "";
+        } else {
+            word += text[i];
+        }
+    }
+    if (!word.empty()) {
+        tokens.push_back(word);
+    }
+    return std::move(tokens);
+}
+
 class SimhashCalculator {
 public:
-    Simhash calculate(const std::string &text) {
+    Simhash calculate(const std::vector<std::string>& tokens) {
         hashtable.assign(64, 0);
-
-        std::vector<std::string> line;
-        std::string word;
-        for (size_t i = 0; i < text.size(); ++i) {
-            if (isspace(text[i])) {
-                line.push_back(word);
-                word = "";
-            } else {
-                word += text[i];
-            }
-            if (text[i] == '\n') {
-                calculatePhraseSimhash(line);
-                line.clear();
-            }
-        }
+        calculatePhraseSimhash(tokens);
         Simhash simhash = 0;
         for (size_t bit = 0; bit < 64; ++bit) {
             simhash <<= 1;
@@ -63,6 +66,11 @@ public:
         }
         return simhash;
     }
+
+    Simhash calculate(const std::string &text) {
+        return calculate(tokenize(text));
+    }
+
 private:
     void calculatePhraseSimhash(std::vector<std::string> line) {
         for (size_t i = 0; i + 1 < line.size(); ++i) {
@@ -81,7 +89,7 @@ class FileSimhashBuilder : public FileProcessor {
 public:
     FileSimhashBuilder(ConcurrentQueue<std::string>& filesForProcessingQueue,
         std::vector<DocumentSimilarityInfo> &documentInfos, std::mutex &documentInfosMutex):
-        FileProcessor(filesForProcessingQueue), documentInfos(documentInfos), 
+        FileProcessor(filesForProcessingQueue), documentInfos(documentInfos),
         documentInfosMutex(documentInfosMutex) {
     }
 
@@ -113,31 +121,23 @@ private:
 
         Log::debug("File size in bytes: ", fileSizeInBytes);
 
-        std::string data;
-        data.resize(fileSizeInBytes);
-        infile.seekg(0, std::ios::beg);
-        infile.read(&data[0], fileSizeInBytes);
+        std::vector<std::string> tokens;
 
-        std::string parsed_data;
-        try {
-            parsed_data = get_inner_text(data);
-        } catch (std::exception &e) {
-            Log::error("Failed to parse ", path, " Error: ", e.what());
+        {
+            std::string data;
+            data.resize(fileSizeInBytes);
+            infile.seekg(0, std::ios::beg);
+            infile.read(&data[0], fileSizeInBytes);
+            tokens = tokenize(data);
         }
-
-        // {
-        //     std::ofstream ofs(path + ".parse");
-        //     ofs << parsed_data << '\n';
-        //     ofs.close();
-        // }
 
         // Process data here
         SimhashCalculator simhashCalculator;
 
         threadDocumentsInfos.emplace_back(
-            path, 
-            simhashCalculator.calculate(parsed_data),
-            parsed_data.size()
+            path,
+            simhashCalculator.calculate(tokens),
+            tokens.size()
         );
 
         return true;

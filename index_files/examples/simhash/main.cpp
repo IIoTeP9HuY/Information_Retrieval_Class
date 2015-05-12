@@ -16,6 +16,7 @@
 #include "clusters_builder.hpp"
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 using namespace simhash;
 
@@ -33,7 +34,7 @@ std::vector<DocumentInfo> buildSimhashes(const std::string &path, size_t threads
     logging::Log::info("Building simhashes from '", path, "' using ", threadsNumber, " threads");
 
     SimhashBuilder simhashBuilder(threadsNumber);
-    std::vector<DocumentSimilarityInfo> documentSimilarities = simhashBuilder.build(path, boost::regex(".*\\.html"));
+    std::vector<DocumentSimilarityInfo> documentSimilarities = simhashBuilder.build(path, boost::regex(".*\\.txt"));
     logging::Log::info("Documents infos number: ", documentSimilarities.size());
 
     std::vector<DocumentInfo> documentInfos;
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]) {
     size_t threadsNumber;
     size_t simhashBitsDistance;
     std::string path;
+    std::string urlsMapping;
     po::options_description generic("Generic options");
     generic.add_options()
         ("help", "produce help message")
@@ -61,6 +63,7 @@ int main(int argc, char *argv[]) {
         ("build,b", "set build mode")
         ("find,f", "set find mode")
         ("bits,s", po::value<size_t>(&simhashBitsDistance)->default_value(5), "set simhash bits distance")
+        ("urlsMapping", po::value<std::string>(&urlsMapping)->default_value("urls"), "set path to urls mapping file")
         ;
 
     po::options_description cmdline_options;
@@ -106,15 +109,49 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        std::ifstream urlsMappingStream(urlsMapping);
+        if (!urlsMappingStream.is_open()) {
+            logging::Log::error("Failed to open file with url mappings");
+            return 0;
+        }
+
+        std::unordered_map<std::string, std::string> pathToUrl;
+
+    	while (path.back() == '/') {
+    		path.resize(path.length() - 1);
+        }
+
+        {
+            std::string filename;
+            std::string url;
+            int urlsProcessed = 0;
+            while (urlsMappingStream >> filename >> url) {
+                auto templateName = std::to_string(urlsProcessed + 1) + ".txt";
+                pathToUrl[path + "/" + templateName] = url;
+                ++urlsProcessed;
+            }
+        }
+
         documentInfos = buildSimhashes(path, threadsNumber);
 
         std::ofstream ofs("simhashes");
         for (const auto &documentInfo : documentInfos) {
-            ofs << documentInfo.path << " " << documentInfo.size << " " << documentInfo.simhash << '\n';
+            if (pathToUrl.find(documentInfo.path) == pathToUrl.end()) {
+                logging::Log::error("Unrecognized path: ", documentInfo.path);
+                return 0;
+            }
+            std::string url = pathToUrl.at(documentInfo.path);
+            ofs << url << " "
+                << documentInfo.size << " "
+                << documentInfo.simhash << '\n';
         }
         ofs.close();
     } else {
         std::ifstream ifs("simhashes");
+        if (!ifs.is_open()) {
+            logging::Log::error("Failed to open file with simhashes");
+            return 0;
+        }
         size_t id = 0;
         while (!ifs.eof()) {
             std::string path;
@@ -125,8 +162,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
             documentInfos.push_back(
-                    DocumentInfo(id, DocumentSimilarityInfo(path, simhash, size))
-                    );
+                DocumentInfo(id, DocumentSimilarityInfo(path, simhash, size)));
             ++id;
         }
         ifs.close();
