@@ -28,6 +28,8 @@ Build everything using
     make
 ```
 
+####Part1, Download wiki and analyze webgraph
+
 #####Download wiki
 ```bash
     crawler http://simple.wikipedia.org/ -o wiki -t 8
@@ -58,6 +60,44 @@ This will create files:
 * "distances" - distance from start_page to every other page
 * "in_out_stats" - input and output degrees for each page
 * "pageranks" - pagerank for each page (damping factor = 0.85)
+
+####Part2, Find duplicates among documents
+
+Next steps allow you to find duplicates among downloaded pages using technique called "Simhashing".
+
+#####Preprocess data a bit
+
+During this step you should remove all frequent and wiki-specific words from documents.
+There is more general ways to do it using word frequency and scoring, but in this case
+it's easier to run simple sed command :)
+
+```bash
+    cp -r text_site text_site_clean && cd text_site_clean
+    find . -type f -exec gsed -n -i "/Navigation menu/q;p" {} \;
+```
+This will remove all footers that start with string "Navigation menu" till the end of file.
+That's where extracted wiki-specific words are located.
+
+#####Build simhash signatures
+
+Now we can build simhashes for documents
+```bash
+    Simhash -b --path=text_site_clean --dest=results
+```
+This will produce file "simhashes" with following format: url length\_in\_words simhash
+For example: http://simple.wikipedia.org/wiki/Nathalia\_Dill 383 11074093965332231517
+
+#####Cluster documents:
+
+To cluster documents we need to specify maximum allowed simhash distance between documents
+in cluster. In this case we will use "-s 5", which means that documents that differ no more then
+in 5 positions will be considered similar.
+```bash
+    Simhash -f -s 5 --dest=results
+```
+This will create files:
+* "clusters_5" - containts list of found clusters
+* "clusters_5_sizes" - contains sizes of found clusters
 
 Collaboration Policy
 ==========
