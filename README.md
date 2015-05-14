@@ -84,8 +84,9 @@ Now we can build simhashes for documents
 ```bash
     Simhash -b --path=text_site_clean --dest=results
 ```
-This will produce file "simhashes" with following format: url length\_in\_words simhash
-For example: http://simple.wikipedia.org/wiki/Nathalia\_Dill 383 11074093965332231517
+This will produce file "simhashes" with following format: **url**  **length\_in\_words**  **simhash**
+
+For example: http://simple.wikipedia.org/wiki/Nathalia_Dill 383 11074093965332231517
 
 #####Cluster documents:
 
