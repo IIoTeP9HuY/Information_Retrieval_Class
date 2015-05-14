@@ -41,9 +41,11 @@ std::vector<std::string> tokenize(const std::string& text) {
     std::vector<std::string> tokens;
     std::string word;
     for (size_t i = 0; i < text.size(); ++i) {
-        if (isspace(text[i])) {
-            tokens.push_back(word);
-            word = "";
+        if (isspace(text[i]) || !isprint(text[i])) {
+            if (word.length() > 1) {
+                tokens.push_back(word);
+                word = "";
+            }
         } else {
             word += text[i];
         }
@@ -72,7 +74,7 @@ public:
     }
 
 private:
-    void calculatePhraseSimhash(std::vector<std::string> line) {
+    void calculatePhraseSimhash(const std::vector<std::string>& line) {
         for (size_t i = 0; i + 1 < line.size(); ++i) {
             std::string hashed = line[i] + " " + line[i + 1];
             size_t hash = std::hash<std::string>()(hashed);

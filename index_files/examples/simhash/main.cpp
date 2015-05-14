@@ -54,11 +54,13 @@ int main(int argc, char *argv[]) {
     size_t simhashBitsDistance;
     std::string path;
     std::string urlsMapping;
+    std::string reportPath;
     po::options_description generic("Generic options");
     generic.add_options()
         ("help", "produce help message")
         ("threads,t", po::value<size_t>(&threadsNumber)->default_value(3), "set threads number")
         ("path", po::value<std::string>(&path), "set path with downloaded urls")
+        ("dest", po::value<std::string>(&reportPath)->default_value("."), "path to save reports")
         ("verbose,v", "set verbose")
         ("build,b", "set build mode")
         ("find,f", "set find mode")
@@ -134,7 +136,7 @@ int main(int argc, char *argv[]) {
 
         documentInfos = buildSimhashes(path, threadsNumber);
 
-        std::ofstream ofs("simhashes");
+        std::ofstream ofs(reportPath + "/" + "simhashes");
         for (const auto &documentInfo : documentInfos) {
             if (pathToUrl.find(documentInfo.path) == pathToUrl.end()) {
                 logging::Log::error("Unrecognized path: ", documentInfo.path);
@@ -147,7 +149,7 @@ int main(int argc, char *argv[]) {
         }
         ofs.close();
     } else {
-        std::ifstream ifs("simhashes");
+        std::ifstream ifs(reportPath + "/" + "simhashes");
         if (!ifs.is_open()) {
             logging::Log::error("Failed to open file with simhashes");
             return 0;
@@ -180,7 +182,8 @@ int main(int argc, char *argv[]) {
 
         sort(clusters.begin(), clusters.end(), &vectorSizeComparator);
         {
-            std::ofstream ofs("clusters");
+            std::ofstream ofs(
+                reportPath + "/" + "clusters_" + std::to_string(simhashBitsDistance));
             for (size_t i = 0; i < clusters.size(); ++i) {
                 ofs << "Cluster number: " << i << '\n';
                 for (size_t j = 0; j < clusters[i].size(); ++j) {
@@ -192,7 +195,8 @@ int main(int argc, char *argv[]) {
         }
 
         {
-            std::ofstream ofs("clusters_sizes");
+            std::ofstream ofs(
+                reportPath + "/" + "clusters_" + std::to_string(simhashBitsDistance) + "_sizes");
             for (size_t i = 0; i < clusters.size(); ++i) {
                 ofs << i << " " << clusters[i].size() << '\n';
             }

@@ -20,7 +20,7 @@ template <> struct hash<std::pair<size_t, size_t>> {
 namespace simhash {
 
 size_t simhashDistance(const Simhash &lhs, const Simhash &rhs) {
-    return __builtin_popcount(lhs ^ rhs);
+    return __builtin_popcountll(lhs ^ rhs);
 }
 
 uint64_t bitRotateRight(uint64_t x, size_t shift) {
@@ -31,8 +31,7 @@ bool bitRotateComparator(const DocumentInfo &lhs, const DocumentInfo &rhs, const
     return (bitRotateRight(lhs.simhash, shift) < bitRotateRight(rhs.simhash, shift));
 }
 
-uint64_t bitDrop(uint64_t x, size_t bit) {
-    if (bit >= 64) {
+uint64_t bitDrop(uint64_t x, size_t bit) { if (bit >= 64) {
         return x;
     }
     return x & (~(1ll << bit));
@@ -58,8 +57,8 @@ public:
 
         logging::Log::info("Clustering ", documentInfos.size(), " documents");
 
-        for (int firstBit = 64; firstBit >= 0; --firstBit) {
-            for (int secondBit = firstBit; secondBit >= 0; --secondBit) {
+        for (int firstBit = 64; firstBit >= 64; --firstBit) {
+            for (int secondBit = firstBit; secondBit >= firstBit; --secondBit) {
                 auto preprocessor = [&](uint64_t x) {
                     return bitDrop(bitDrop(x, firstBit), secondBit);
                 };
@@ -68,20 +67,21 @@ public:
                 std::vector<DocumentInfo> uniqueDocumentInfos;
                 size_t blockStart = 0;
                 Simhash blockSimhash = documentInfos[blockStart].simhash;
+                std::string blockPath = documentInfos[blockStart].path;
                 std::vector<size_t> currentBlock;
                 for (size_t i = 1; i <= documentInfos.size(); ++i) {
                     if ((i == documentInfos.size()) || (preprocessor(blockSimhash) != preprocessor(documentInfos[i].simhash))) {
                         uniqueDocumentInfos.push_back(documentInfos[blockStart]);
                         if (!currentBlock.empty()) {
                             sameSimhashes.push_back(
-                                    std::make_pair(documentInfos[blockStart].id, currentBlock)
-                                    );
+                                std::make_pair(documentInfos[blockStart].id, currentBlock));
                         }
                         currentBlock.clear();
 
                         if (i != documentInfos.size()) {
                             blockStart = i;
                             blockSimhash = documentInfos[blockStart].simhash;
+                            blockPath = documentInfos[blockStart].path;
                         }
                     } else {
                         currentBlock.push_back(documentInfos[i].id);
@@ -92,19 +92,27 @@ public:
             logging::Log::info("Unique: ", documentInfos.size(), ", current bit ", firstBit);
         }
 
-        for (size_t i = 0; i < documentInfos.size(); ++i) {
-            clusterOfDocument[documentInfos[i].id] = i;
-            clusters.push_back({documentInfos[i].id});
-        }
+        auto similarDocument = findSimilar(documentInfos);
+        clusters = findClusters(similarDocument);
+        decodeIds(documentInfos);
 
+        Log::info("Clusters number: ", clusters.size());
+        for (size_t i = 0; i < clusters.size(); ++i) {
+            for (size_t j = 0; j < clusters[i].size(); ++j) {
+                clusterOfDocument[clusters[i][j]] = i;
+            }
+        }
         fillClusters();
+
         return clusters;
     }
 
     void fillClusters() {
+        Log::info("Merging documents with same simhashes");
         for (int i = static_cast<int>(sameSimhashes.size()) - 1; i >= 0; --i) {
             const auto &sameSimhashesBlock = sameSimhashes[i];
             size_t id = sameSimhashesBlock.first;
+            assert(clusterOfDocument.find(id) != clusterOfDocument.end());
             size_t clusterIndex = clusterOfDocument[id];
             for (auto duplicateId : sameSimhashesBlock.second) {
                 clusters[clusterIndex].push_back(duplicateId);
@@ -122,43 +130,49 @@ private:
         std::vector<size_t> distancesHistogram(64, 0);
         std::unordered_set<std::pair<size_t, size_t>> compared;
 
-        const size_t WINDOW_SIZE = 20;
-        const size_t ROTATE_SIZE = 8;
+        const size_t WINDOW_SIZE = 30;
+        const size_t ROTATE_SIZE = 4;
 
         for (size_t k = 0; k < 64 / ROTATE_SIZE; ++k) {
             std::sort(documentInfos.begin(), documentInfos.end(),
                     std::bind(bitRotateComparator, _1, _2, k * ROTATE_SIZE));
 
             Log::info("Rotate number: ", k);
+            int similarFound = 0;
 
             for (size_t i = 0; i < documentInfos.size(); ++i) {
                 for (size_t j = i + 1; j < std::min(i + WINDOW_SIZE, documentInfos.size()); ++j) {
                     size_t s1 = documentInfos[i].size;
                     size_t s2 = documentInfos[j].size;
-                    size_t idI = documentInfos[i].id;
-                    size_t idJ = documentInfos[j].id;
-                    double proportion = 0.25;
+                    // size_t idI = documentInfos[i].id;
+                    // size_t idJ = documentInfos[j].id;
+                    size_t idI = i;
+                    size_t idJ = j;
+                    double proportion = 0.20;
                     if (std::max(s1, s2) > std::min(s1, s2) * (1 + proportion)) {
                         continue;
                     }
-                    size_t distance = simhashDistance(documentInfos[i].simhash, documentInfos[j].simhash);
                     if (compared.find(std::make_pair(idI, idJ)) == compared.end()) {
                         compared.insert(std::make_pair(idI, idJ));
                         compared.insert(std::make_pair(idJ, idI));
+                        size_t distance = simhashDistance(documentInfos[i].simhash, documentInfos[j].simhash);
+
                         ++distancesHistogram[distance];
-                    }
-                    if (distance <= simhashBitsDistance) {
-                        if (similarDocuments[idI].find(idJ) == similarDocuments[idI].end()) {
+                        if (distance <= simhashBitsDistance) {
+                            assert(similarDocuments[idI].find(idJ) == similarDocuments[idI].end());
                             similarDocuments[idI].insert(idJ);
                             similarDocuments[idJ].insert(idI);
+                            ++similarFound;
                         }
                     }
                 }
             }
+
+            Log::info("Similar found: ", similarFound);
         }
 
         {
-            std::ofstream ofs("distances_histogram");
+            std::ofstream ofs("stats/distances_histogram_" + std::to_string(simhashBitsDistance));
             for (size_t i = 0; i < distancesHistogram.size(); ++i) {
                 ofs << i << " " << distancesHistogram[i] << '\n';
             }
@@ -169,15 +183,19 @@ private:
     }
 
     std::vector<std::vector<size_t>> findClusters(const std::vector<std::unordered_set<size_t>> &similarDocuments) {
+        Log::info("Looking for clusters among ", similarDocuments.size(), " documents");
         std::vector<std::vector<size_t>> clusters;
         std::set<std::pair<size_t, size_t>, std::greater<std::pair<int, int>>> verticesPowers;
         std::vector<char> clustered(similarDocuments.size(), false);
         std::vector<size_t> currentVertexPower(similarDocuments.size(), 0);
 
+        size_t maxVertexPower = 0;
         for (size_t i = 0; i < similarDocuments.size(); ++i) {
             verticesPowers.insert(std::make_pair(similarDocuments[i].size(), i));
             currentVertexPower[i] = similarDocuments[i].size();
+            maxVertexPower = std::max(maxVertexPower, currentVertexPower[i]);
         }
+        Log::info("Max vertex power: ", maxVertexPower);
 
         while (!verticesPowers.empty()) {
             auto vertexPair = *verticesPowers.begin();
@@ -211,6 +229,15 @@ private:
         }
 
         return clusters;
+    }
+
+    void decodeIds(std::vector<DocumentInfo> &documentInfos) {
+        Log::info("Decoding ids");
+        for (size_t i = 0; i < clusters.size(); ++i) {
+            for (size_t j = 0; j < clusters[i].size(); ++j) {
+                clusters[i][j] = documentInfos[clusters[i][j]].id;
+            }
+        }
     }
 };
 
